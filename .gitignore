@@ -6,3 +6,4 @@ Thumbs.db
 node_modules/
 dist/
 reference/*.m4a
+.gittrash/
