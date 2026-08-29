@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Siatoy TCG · ระบบ POS &amp; จัดการสต๊อก (ตัวอย่าง)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   THEME TOKENS
+   ☀️ กลางวัน = ขาว-เขียว   |   🌙 กลางคืน = ดำ-ทอง
+   ========================================================= */
+:root{
+  /* ---- LIGHT (white / green) ---- */
+  --bg:#f5f8f6;
+  --bg2:#eef3f0;
+  --panel:#ffffff;
+  --panel2:#f7faf8;
+  --line:#e3eae5;
+  --line2:#cfdad3;
+  --txt:#16241c;
+  --txt-soft:#3d4d44;
+  --txt-faint:#9aa9a0;
+  --muted:#6c7d73;
+  --mini:#8a998f;
+  --placeholder:#a9b6ae;
+
+  --gold:#16a34a;
+  --gold2:#22c55e;
+  --gold-dim:#0f7a37;
+  --gold-a:rgba(22,163,74,.12);
+  --gold-a2:rgba(22,163,74,.03);
+  --gold-line:rgba(22,163,74,.34);
+  --on-gold:#ffffff;
+  --focus:rgba(22,163,74,.14);
+
+  --green:#16a34a;
+  --red:#e0453b;
+  --red-txt:#c2352c;
+  --blue:#2563eb;
+  --purple:#7c3aed;
+  --warn:#c77c06;
+  --purple-a:rgba(124,58,237,.10);
+  --purple-a2:var(--purple-a2);
+  --purple-line:var(--purple-line);
+
+  --topbar-bg:#ffffff;
+  --sidebar-bg:#ffffff;
+  --modal-bg:#ffffff;
+  --surface:#ffffff;
+  --input-bg:#ffffff;
+  --btn-bg:#ffffff;
+  --btn-hover:#eef3f0;
+  --btn-hover-bd:#b6c5bc;
+  --thumb-bg:linear-gradient(145deg,#f2f7f3,#e6efe9);
+  --overlay:rgba(16,38,26,.42);
+  --scroll:#cfdad3;
+  --scroll-h:#b3c2b8;
+  --logo-bg:#0d1210;
+  --tag-bg:#eef3f0;
+  --tag-txt:#4b5a51;
+  --card-shadow:0 1px 3px rgba(21,52,35,.05);
+  --shadow:0 12px 32px rgba(21,52,35,.14);
+  --modal-shadow:0 24px 60px rgba(16,38,26,.28);
+  --sheet-shadow:0 -8px 30px rgba(16,38,26,.18);
+  --glow1:rgba(34,197,94,.16);
+  --glow2:rgba(22,163,74,.10);
+  --stat-glow:rgba(34,197,94,.16);
+
+  --nw-bg:#fff7e3;--nw-bd:#f3ddab;--nw-tx:#8a6316;
+  --nr-bg:#fdeceb;--nr-bd:#f5c6c2;--nr-tx:#a8352c;
+  --ni-bg:#eaf1fe;--ni-bd:#c6d8fb;--ni-tx:#274d9e;
+  --ng-bg:#e8f7ee;--ng-bd:#bde5cc;--ng-tx:#146c37;
+  --lp-bg:#e9f7ed;--lp-bd:#c3e5cf;--lp-tx:#1b3a26;
+
+  --radius:14px;
+}
+html[data-theme="dark"]{
+  /* ---- DARK (black / gold) ---- */
+  --bg:#080808;
+  --bg2:#0f0f10;
+  --panel:#151517;
+  --panel2:#1c1c1f;
+  --line:#26262b;
+  --line2:#38383e;
+  --txt:#f2f2f3;
+  --txt-soft:#c6c6cc;
+  --txt-faint:#5f5f68;
+  --muted:#9a9aa2;
+  --mini:#767680;
+  --placeholder:#55555e;
+
+  --gold:#f5b301;
+  --gold2:#ffd35c;
+  --gold-dim:#ffd35c;
+  --gold-a:rgba(245,179,1,.14);
+  --gold-a2:rgba(245,179,1,.03);
+  --gold-line:rgba(245,179,1,.35);
+  --on-gold:#1a1400;
+  --focus:rgba(245,179,1,.14);
+
+  --green:#37d17a;
+  --red:#ff5f56;
+  --red-txt:#ff8f88;
+  --blue:#4aa8ff;
+  --purple:#b98cff;
+  --warn:#f5b301;
+  --purple-a:rgba(185,140,255,.15);
+  --purple-a2:rgba(185,140,255,.09);
+  --purple-line:rgba(185,140,255,.4);
+
+  --topbar-bg:linear-gradient(180deg,#131314,#0c0c0d);
+  --sidebar-bg:linear-gradient(180deg,#101011,#0b0b0c);
+  --modal-bg:linear-gradient(180deg,#18181b,#111113);
+  --surface:#151517;
+  --input-bg:#0c0c0e;
+  --btn-bg:#1c1c1f;
+  --btn-hover:#26262a;
+  --btn-hover-bd:#4a4a52;
+  --thumb-bg:linear-gradient(145deg,#232328,#141417);
+  --overlay:rgba(0,0,0,.78);
+  --scroll:#303036;
+  --scroll-h:#43434b;
+  --logo-bg:#000000;
+  --tag-bg:#232327;
+  --tag-txt:#c3c3ca;
+  --card-shadow:none;
+  --shadow:0 10px 30px rgba(0,0,0,.55);
+  --modal-shadow:0 20px 50px rgba(0,0,0,.6);
+  --sheet-shadow:0 -8px 30px rgba(0,0,0,.6);
+  --glow1:rgba(245,179,1,.10);
+  --glow2:rgba(245,179,1,.06);
+  --stat-glow:rgba(245,179,1,.13);
+
+  --nw-bg:rgba(245,179,1,.1);--nw-bd:rgba(245,179,1,.3);--nw-tx:#f7d489;
+  --nr-bg:rgba(255,95,86,.1);--nr-bd:rgba(255,95,86,.3);--nr-tx:#ffa39d;
+  --ni-bg:rgba(74,168,255,.09);--ni-bd:rgba(74,168,255,.28);--ni-tx:#a9d5ff;
+  --ng-bg:rgba(55,209,122,.09);--ng-bd:rgba(55,209,122,.28);--ng-tx:#8ee7b6;
+  --lp-bg:#1c2b1e;--lp-bd:#2f4a33;--lp-tx:#dff0e2;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:'Kanit',system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 82% -12%, var(--glow1), transparent 62%),
+    radial-gradient(900px 520px at -12% 112%, var(--glow2), transparent 62%),
+    var(--bg);
+  color:var(--txt);
+  font-weight:300;
+  font-size:15px;
+  overflow:hidden;
+  transition:background-color .25s, color .25s;
+}
+button,input,select,textarea{font-family:inherit;font-weight:300;color:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:20px}
+::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
+
+.gold-text{
+  background:linear-gradient(180deg,#34d26f 0%,var(--gold) 55%,#0d7a36 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+html[data-theme="dark"] .gold-text{
+  background:linear-gradient(180deg,#ffe89a 0%,var(--gold) 55%,#c98d00 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+/* ---------- APP SHELL ---------- */
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.topbar{
+  height:62px;flex:none;display:flex;align-items:center;gap:14px;padding:0 16px;
+  background:var(--topbar-bg);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 2px 14px rgba(0,0,0,.06);z-index:40;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-logo{
+  width:42px;height:42px;flex:none;border-radius:12px;overflow:hidden;
+  background:var(--logo-bg);border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px var(--gold-a);
+}
+.brand-logo img{width:100%;height:100%;object-fit:cover;display:none}
+.brand-logo.has-img .logo-fallback{display:none}
+.brand-logo.has-img img{display:block}
+.brand-name{line-height:1.05;min-width:0}
+.brand-name b{display:block;font-weight:600;font-size:16px;letter-spacing:.3px}
+.brand-name span{font-size:10.5px;color:var(--muted);letter-spacing:2.4px;font-weight:300}
+.topbar-spacer{flex:1}
+.top-chip{
+  display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;
+  background:var(--bg2);border:1px solid var(--line);font-size:12.5px;color:var(--muted);white-space:nowrap
+}
+.top-chip b{color:var(--txt);font-weight:400}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+
+.theme-btn{width:38px;height:38px;padding:0;justify-content:center;font-size:16px;border-radius:11px}
+
+.role-switch{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.role-switch button{
+  border:0;background:transparent;color:var(--muted);padding:6px 13px;border-radius:999px;
+  font-size:12.5px;cursor:pointer;white-space:nowrap;transition:.16s
+}
+.role-switch button.on{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--on-gold);font-weight:500}
+
+.body-wrap{flex:1;display:flex;min-height:0}
+.sidebar{
+  width:224px;flex:none;background:var(--sidebar-bg);
+  border-right:1px solid var(--line);padding:12px 10px;overflow-y:auto;z-index:30
+}
+.nav-group{font-size:10.5px;letter-spacing:1.6px;color:var(--txt-faint);margin:14px 10px 7px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;
+  cursor:pointer;color:var(--txt-soft);font-size:14px;transition:.15s;margin-bottom:2px;position:relative
+}
+.nav-item:hover{background:var(--bg2);color:var(--txt)}
+.nav-item.on{background:linear-gradient(90deg,var(--gold-a),var(--gold-a2));color:var(--gold-dim);font-weight:400}
+.nav-item.on::before{content:'';position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--gold)}
+.nav-ico{width:20px;text-align:center;font-size:16px;flex:none}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:400}
+
+.main{flex:1;overflow-y:auto;padding:20px 22px 60px;min-width:0}
+.page{display:none}
+.page.on{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.page-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.page-head h1{margin:0;font-size:22px;font-weight:500}
+.page-head p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.page-head .spacer{flex:1}
+
+/* ---------- COMPONENTS ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--card-shadow)}
+.card.tight{padding:0;overflow:hidden}
+.card-title{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:400;margin:0 0 12px}
+.card-title .ic{color:var(--gold)}
+.card-title .sub{color:var(--muted);font-size:12px;font-weight:300;margin-left:auto}
+
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;position:relative;overflow:hidden;box-shadow:var(--card-shadow)}
+.stat::after{content:'';position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,var(--stat-glow),transparent 70%)}
+.stat .lbl{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.stat .val{font-size:25px;font-weight:500;margin-top:5px;letter-spacing:-.5px}
+.stat .sub{font-size:11.5px;color:var(--txt-faint);margin-top:2px}
+.stat .val.g{color:var(--gold)}
+.stat .val.green{color:var(--green)}
+.stat .val.red{color:var(--red)}
+
+.btn{
+  border:1px solid var(--line2);background:var(--btn-bg);color:var(--txt);
+  padding:9px 15px;border-radius:10px;cursor:pointer;font-size:13.5px;transition:.15s;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap
+}
+.btn:hover{background:var(--btn-hover);border-color:var(--btn-hover-bd)}
+.btn.gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--on-gold);border-color:var(--gold);font-weight:500;box-shadow:0 2px 10px var(--gold-a)}
+.btn.gold:hover{filter:brightness(1.06);background:linear-gradient(180deg,var(--gold2),var(--gold))}
+.btn.ghost{background:transparent}
+.btn.danger{background:rgba(224,69,59,.1);border-color:rgba(224,69,59,.38);color:var(--red-txt)}
+.btn.danger:hover{background:rgba(224,69,59,.18)}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:9px}
+.btn.block{width:100%;justify-content:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.inp{
+  background:var(--input-bg);border:1px solid var(--line2);border-radius:10px;padding:10px 13px;
+  font-size:14px;width:100%;outline:none;transition:.15s
+}
+.inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--focus)}
+.inp::placeholder{color:var(--placeholder)}
+select.inp{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%236c7d73' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+html[data-theme="dark"] select.inp{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%239a9aa2' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>")}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{
+  text-align:left;padding:11px 14px;color:var(--muted);font-weight:400;font-size:12px;
+  border-bottom:1px solid var(--line);background:var(--bg2);position:sticky;top:0;letter-spacing:.3px
+}
+td{padding:11px 14px;border-bottom:1px solid var(--line)}
+tbody tr:hover{background:var(--panel2)}
+tbody tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow:auto;max-height:520px}
+
+.tag{display:inline-block;padding:3px 9px;border-radius:7px;font-size:11.5px;background:var(--tag-bg);color:var(--tag-txt);white-space:nowrap}
+.tag.gold{background:var(--gold-a);color:var(--gold-dim)}
+.tag.green{background:var(--gold-a);color:var(--gold-dim)}
+.tag.red{background:rgba(224,69,59,.13);color:var(--red-txt)}
+.tag.blue{background:rgba(37,99,235,.12);color:var(--blue)}
+.tag.purple{background:var(--purple-a);color:var(--purple)}
+.tag.warn{background:rgba(217,138,11,.14);color:var(--warn)}
+html[data-theme="dark"] .tag.blue{background:rgba(74,168,255,.14)}
+html[data-theme="dark"] .tag.purple{background:rgba(185,140,255,.16)}
+html[data-theme="dark"] .tag.red{background:rgba(255,95,86,.14)}
+
+.owner-only{display:none}
+body.role-owner .owner-only{display:revert}
+.sup-up{display:none}
+body.role-owner .sup-up,body.role-sup .sup-up{display:revert}
+.cost-cell{filter:blur(5px);user-select:none;opacity:.6}
+body.role-owner .cost-cell,body.role-sup .cost-cell{filter:none;opacity:1}
+
+/* ---------- POS ---------- */
+.pos-wrap{display:grid;grid-template-columns:1fr 396px;gap:16px;align-items:start}
+.scan-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.scan-input{
+  flex:1;background:var(--input-bg);border:1.5px solid var(--gold);border-radius:12px;
+  padding:14px 16px;font-size:16px;outline:none;box-shadow:0 0 0 4px var(--focus);color:var(--txt)
+}
+.scan-input::placeholder{color:var(--placeholder);font-size:15px}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}
+.prod{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px;
+  cursor:pointer;transition:.15s;position:relative;overflow:hidden;box-shadow:var(--card-shadow)
+}
+.prod:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow)}
+.prod:active{transform:scale(.98)}
+.prod .thumb{
+  height:74px;border-radius:9px;margin-bottom:9px;display:flex;align-items:center;justify-content:center;
+  font-size:30px;background:var(--thumb-bg);border:1px solid var(--line)
+}
+.prod .nm{font-size:12.8px;line-height:1.3;height:33px;overflow:hidden;margin-bottom:6px}
+.prod .pr{color:var(--gold);font-weight:500;font-size:14.5px}
+html[data-theme="dark"] .prod .pr{color:var(--gold2)}
+.prod .st{font-size:10.5px;color:var(--txt-faint);margin-top:2px}
+.prod .low{position:absolute;top:7px;right:7px;background:var(--red);color:#fff;font-size:9.5px;padding:2px 6px;border-radius:6px}
+
+.cart-panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;position:sticky;top:0;max-height:calc(100vh - 110px);
+  box-shadow:var(--card-shadow)
+}
+.cart-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;background:var(--panel2)}
+.cart-head b{font-weight:500;font-size:14.5px}
+.cart-items{flex:1;overflow-y:auto;padding:8px;min-height:150px}
+.cart-empty{text-align:center;color:var(--placeholder);padding:56px 16px;font-size:13.5px}
+.cart-empty .big{font-size:38px;display:block;margin-bottom:10px;opacity:.6}
+.ci{display:flex;gap:10px;padding:10px;border-radius:11px;background:var(--panel2);margin-bottom:7px;border:1px solid var(--line)}
+.ci .info{flex:1;min-width:0}
+.ci .nm{font-size:13px;line-height:1.3}
+.ci .meta{font-size:11px;color:var(--muted);margin-top:2px}
+.ci .price-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.ci .qty{display:flex;align-items:center;gap:0;background:var(--input-bg);border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.ci .qty button{width:26px;height:26px;border:0;background:transparent;color:var(--gold);cursor:pointer;font-size:15px}
+.ci .qty button:hover{background:var(--bg2)}
+.ci .qty span{min-width:26px;text-align:center;font-size:13px}
+.ci .amt{margin-left:auto;text-align:right}
+.ci .amt b{font-weight:500;font-size:13.5px}
+.ci .amt .was{display:block;font-size:10.5px;color:var(--muted);text-decoration:line-through}
+.ci .x{border:0;background:transparent;color:var(--placeholder);cursor:pointer;font-size:15px;padding:0 2px;align-self:flex-start}
+.ci .x:hover{color:var(--red)}
+.ci .disc-btn{border:1px dashed var(--line2);background:transparent;color:var(--muted);font-size:10.5px;padding:2px 7px;border-radius:6px;cursor:pointer}
+.ci .disc-btn:hover{border-color:var(--gold);color:var(--gold-dim)}
+.ci .disc-btn.act{border-style:solid;border-color:var(--gold);color:var(--gold-dim);background:var(--gold-a)}
+
+.cart-foot{border-top:1px solid var(--line);padding:13px 15px;background:var(--panel2)}
+.sum-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.sum-row b{color:var(--txt);font-weight:400}
+.sum-row.disc b{color:var(--red-txt)}
+.sum-row.fee b{color:var(--blue)}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed var(--line2);margin-top:9px;padding-top:11px}
+.sum-total span{font-size:14px}
+.sum-total b{font-size:27px;font-weight:600;letter-spacing:-.5px}
+.pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0 11px}
+.pay-btn{
+  border:1px solid var(--line2);background:var(--input-bg);border-radius:11px;padding:11px 5px;cursor:pointer;
+  text-align:center;font-size:12px;transition:.15s;color:var(--muted)
+}
+.pay-btn .i{display:block;font-size:19px;margin-bottom:3px}
+.pay-btn:hover{border-color:var(--btn-hover-bd)}
+.pay-btn.on{border-color:var(--gold);background:var(--gold-a);color:var(--gold-dim);font-weight:400}
+
+.member-row{display:flex;gap:7px;margin-bottom:11px}
+
+/* ---------- MODAL ---------- */
+.modal-bg{
+  position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(5px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:18px
+}
+.modal-bg.on{display:flex;animation:fade .18s}
+.modal{
+  background:var(--modal-bg);border:1px solid var(--line2);
+  border-radius:18px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:var(--modal-shadow)
+}
+.modal.wide{max-width:820px}
+.modal-head{padding:17px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.modal-head h3{margin:0;font-size:17px;font-weight:500;flex:1}
+.modal-head .x{border:0;background:var(--bg2);color:var(--muted);width:30px;height:30px;border-radius:9px;cursor:pointer;font-size:15px}
+.modal-head .x:hover{background:var(--btn-hover);color:var(--txt)}
+.modal-body{padding:20px}
+.modal-foot{padding:15px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+/* confirm bill */
+.bill-total{
+  text-align:center;padding:20px;border-radius:14px;margin-bottom:16px;
+  background:linear-gradient(180deg,var(--gold-a),transparent);border:1px solid var(--gold-line)
+}
+.bill-total .lbl{font-size:13px;color:var(--gold-dim);letter-spacing:1px}
+.bill-total .amt{font-size:48px;font-weight:600;line-height:1.15;letter-spacing:-1.5px}
+.bill-total .cnt{font-size:12.5px;color:var(--muted)}
+.bill-lines{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.bill-line{display:flex;padding:10px 13px;border-bottom:1px solid var(--line);font-size:13.5px;gap:10px}
+.bill-line:last-child{border-bottom:0}
+.bill-line .q{color:var(--gold);min-width:26px}
+.bill-line .n{flex:1}
+.bill-line .p{text-align:right;font-variant-numeric:tabular-nums}
+.bill-line .p s{color:var(--muted);font-size:11.5px;display:block}
+
+.notice{
+  padding:11px 14px;border-radius:11px;font-size:13px;display:flex;gap:9px;align-items:flex-start;line-height:1.45
+}
+.notice.warn{background:var(--nw-bg);border:1px solid var(--nw-bd);color:var(--nw-tx)}
+.notice.red{background:var(--nr-bg);border:1px solid var(--nr-bd);color:var(--nr-tx)}
+.notice.info{background:var(--ni-bg);border:1px solid var(--ni-bd);color:var(--ni-tx)}
+.notice.green{background:var(--ng-bg);border:1px solid var(--ng-bd);color:var(--ng-tx)}
+
+/* toast */
+#toasts{position:fixed;bottom:22px;left:22px;z-index:200;display:flex;flex-direction:column;gap:9px;align-items:flex-start;pointer-events:none}
+.toast{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);
+  padding:12px 16px;border-radius:11px;font-size:13.5px;box-shadow:var(--shadow);
+  animation:slidein .25s;max-width:340px
+}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes slidein{from{transform:translateX(-40px);opacity:0}to{transform:none;opacity:1}}
+
+/* scanner sim */
+.scanner-box{
+  position:relative;background:#0d1210;border-radius:14px;height:250px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line2)
+}
+.scanner-box .frame{width:70%;height:52%;border:2px solid var(--gold2);border-radius:12px;position:relative;opacity:.9}
+.scanner-box .frame::before,.scanner-box .frame::after{content:'';position:absolute;background:var(--gold2);height:3px;width:26px}
+.scanner-box .frame::before{top:-2px;left:-2px}
+.scanner-box .frame::after{bottom:-2px;right:-2px}
+.scan-line{position:absolute;left:16%;width:68%;height:2px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);animation:scanmove 1.8s ease-in-out infinite;box-shadow:0 0 12px var(--gold2)}
+@keyframes scanmove{0%,100%{top:28%}50%{top:70%}}
+.scanner-box .hint{position:absolute;bottom:12px;font-size:12px;color:#9fb0a5}
+
+/* segmented */
+.seg{display:inline-flex;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+.seg button.on{background:var(--gold);color:var(--on-gold);font-weight:500}
+
+.bar{height:7px;border-radius:99px;background:var(--bg2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+
+.line-preview{
+  background:var(--lp-bg);border:1px solid var(--lp-bd);border-radius:14px;padding:14px 16px;font-size:13px;line-height:1.75;
+  white-space:pre-wrap;color:var(--lp-tx);font-family:'Kanit';max-width:400px
+}
+.chat-head{display:flex;align-items:center;gap:9px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+.chat-ava{width:26px;height:26px;border-radius:8px;background:#06c755;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+
+.mini{font-size:11.5px;color:var(--mini)}
+.hr{height:1px;background:var(--line);margin:16px 0}
+.flex{display:flex;gap:10px;align-items:center}
+.flex.wrap{flex-wrap:wrap}
+.right{margin-left:auto}
+
+.swatch{width:52px;height:34px;border-radius:9px;border:1px solid var(--line2);cursor:pointer;transition:.15s}
+.swatch:hover{transform:translateY(-2px)}
+.swatch.on{border:2px solid var(--gold);box-shadow:0 0 0 3px var(--focus)}
+
+.mobile-nav{display:none}
+.hamb{display:none}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:1200px){
+  .pos-wrap{grid-template-columns:1fr 350px}
+  .g4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:980px){
+  .sidebar{position:fixed;left:0;top:62px;bottom:0;transform:translateX(-100%);transition:.25s;box-shadow:var(--shadow)}
+  .sidebar.open{transform:none}
+  .hamb{display:inline-flex}
+  .pos-wrap{grid-template-columns:1fr}
+  .cart-panel{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:70vh;border-radius:18px 18px 0 0;transform:translateY(calc(100% - 64px));transition:.28s;z-index:50;box-shadow:var(--sheet-shadow)}
+  .cart-panel.open{transform:none}
+  .cart-head{cursor:pointer}
+  .g3,.g2{grid-template-columns:1fr}
+  .main{padding:16px 14px 100px}
+  .brand-name span{display:none}
+}
+@media(max-width:640px){
+  .g4{grid-template-columns:1fr}
+  .role-switch button{padding:6px 9px;font-size:11.5px}
+  .brand-name{display:none}
+  #toasts{top:70px;bottom:auto;left:10px;right:10px;align-items:stretch}
+  .toast{max-width:none}
+  .top-chip{display:none}
+  .page-head h1{font-size:19px}
+  .prod-grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+}
+
+
+/* ---------- LABEL / BARCODE ---------- */
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;margin-top:10px}
+.chk input{width:15px;height:15px;accent-color:var(--gold);cursor:pointer}
+.q-no{
+  width:26px;height:26px;flex:none;border-radius:8px;background:var(--gold-a);color:var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;font-size:12.5px;align-self:center
+}
+.lbl-stage{
+  display:flex;align-items:center;justify-content:center;padding:26px;border-radius:12px;min-height:250px;overflow:auto;
+  background:repeating-conic-gradient(var(--bg2) 0% 25%, var(--panel2) 0% 50%) 50%/18px 18px;
+  border:1px solid var(--line)
+}
+.lbl{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;box-sizing:border-box;padding:1.2mm;background:#fff;color:#000;
+  font-family:'Kanit',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.18)
+}
+.lbl .l-shop{font-size:5.2pt;letter-spacing:1.1px;color:#444;line-height:1.1}
+.lbl .l-nm{font-size:6.4pt;line-height:1.15;text-align:center;font-weight:500;max-height:2.4em;overflow:hidden;margin:.5mm 0}
+.lbl .bc{margin-top:.4mm}
+.lbl .l-code{font-size:5.8pt;letter-spacing:1.4px;line-height:1.3;color:#111}
+.lbl .l-price{font-size:9.5pt;font-weight:700;line-height:1.2}
+.sheet-preview{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:52vh;overflow:auto;
+  padding:16px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)
+}
+.sheet-preview .lbl{box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* ---------- PRINT ---------- */
+#printArea{display:none}
+.sheet.a4{display:flex;flex-wrap:wrap;gap:2mm;align-content:flex-start}
+.sheet.a4 .lbl{border:1px dashed #ccc}
+.sheet.roll .lbl{page-break-after:always;break-after:page;box-shadow:none}
+.sheet.roll .lbl:last-child{page-break-after:auto;break-after:auto}
+@media print{
+  html,body{background:#fff !important;overflow:visible !important;height:auto !important}
+  #app,#toasts,.modal-bg{display:none !important}
+  #printArea{display:block !important}
+  .lbl{box-shadow:none !important}
+  .sheet.a4 .lbl{border:0}
+}
+
+</style>
+</head>
+<body class="role-owner">
+
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="btn sm hamb" onclick="toggleSidebar()">☰</button>
+    <div class="brand">
+      <div class="brand-logo" id="brandLogo">
+        <img src="logo.png" alt="Siatoy TCG" onload="this.parentNode.classList.add('has-img')">
+        <span class="logo-fallback" style="font-size:19px">🃏</span>
+      </div>
+      <div class="brand-name">
+        <b class="gold-text">Siatoy TCG</b>
+        <span>TRADING CARD GAME</span>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="top-chip"><span class="dot"></span> สาขา <b>หน้าร้าน</b></div>
+    <div class="top-chip" id="clock">--:--</div>
+    <button class="btn sm theme-btn" id="themeBtn" onclick="toggleTheme()" title="สลับโหมดกลางวัน / กลางคืน">🌙</button>
+    <div class="role-switch">
+      <button data-role="admin" onclick="setRole('admin')">👤 พนักงาน</button>
+      <button data-role="sup" onclick="setRole('sup')">🛡️ หัวหน้า</button>
+      <button data-role="owner" class="on" onclick="setRole('owner')">👑 เจ้าของ</button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="nav-group">ขายหน้าร้าน</div>
+      <div class="nav-item on" data-page="pos" onclick="go('pos')"><span class="nav-ico">🛒</span> ขายสินค้า (POS)</div>
+      <div class="nav-item" data-page="bills" onclick="go('bills')"><span class="nav-ico">🧾</span> บิลขาย / ยกเลิก</div>
+
+      <div class="nav-group">คลังสินค้า</div>
+      <div class="nav-item" data-page="scan" onclick="go('scan')"><span class="nav-ico">📥</span> รับเข้า / ตัดออก</div>
+      <div class="nav-item" data-page="stock" onclick="go('stock')"><span class="nav-ico">📦</span> สินค้า &amp; สต๊อก</div>
+      <div class="nav-item" data-page="labels" onclick="go('labels')"><span class="nav-ico">🏷️</span> สร้าง &amp; พิมพ์บาร์โค้ด</div>
+      <div class="nav-item" data-page="sets" onclick="go('sets')"><span class="nav-ico">🎴</span> บล็อกเซต &amp; ราคา</div>
+      <div class="nav-item" data-page="vendors" onclick="go('vendors')"><span class="nav-ico">🤝</span> ผู้ฝากขาย</div>
+      <div class="nav-item" data-page="event" onclick="go('event')"><span class="nav-ico">🎪</span> สต๊อกออกงาน</div>
+
+      <div class="nav-group">การเงิน</div>
+      <div class="nav-item" data-page="recon" onclick="go('recon')"><span class="nav-ico">🏦</span> กระทบยอดธนาคาร <span class="nav-badge">3</span></div>
+      <div class="nav-item" data-page="members" onclick="go('members')"><span class="nav-ico">💳</span> สมาชิก &amp; แต้ม</div>
+
+      <div class="nav-group">หลังบ้าน</div>
+      <div class="nav-item" data-page="report" onclick="go('report')"><span class="nav-ico">📊</span> รายงานสรุป</div>
+      <div class="nav-item" data-page="notify" onclick="go('notify')"><span class="nav-ico">🔔</span> แจ้งเตือน Line/TG</div>
+      <div class="nav-item" data-page="settings" onclick="go('settings')"><span class="nav-ico">⚙️</span> ตั้งค่าระบบ</div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main" id="main">
+      <div id="pages"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox"></div>
+</div>
+<div id="toasts"></div>
+<style id="pageStyle"></style>
+<div id="printArea"></div>
+
+<script>
+/* ==========================================================
+   Siatoy TCG · POS Demo  (prototype / mock data)
+   ========================================================== */
+const S = {
+  role: 'owner',
+  page: 'pos',
+  cart: [],
+  pay: 'cash',
+  billDiscount: 0,
+  billDiscountType: 'baht',
+  member: null,
+  creditFee: 3,
+  ownerFree: false,
+  scanMode: 'in',
+  theme: 'light',
+  scanList: [],
+};
+
+/* ---------- MOCK DATA ---------- */
+const VENDORS = [
+  {id:'001', name:'ร้านพี่โจ้ การ์ดสะสม', tel:'081-234-5678', comm:15, since:'2025-11-02'},
+  {id:'002', name:'คุณเบียร์ (นักสะสม)', tel:'089-777-1122', comm:20, since:'2026-01-15'},
+  {id:'003', name:'Siatoy TCG (ของร้านเอง)', tel:'-', comm:0, since:'2025-10-01'},
+  {id:'004', name:'น้องมิ้นท์ Card Shop', tel:'092-555-8899', comm:12, since:'2026-03-20'},
+];
+
+const SETS = [
+  {id:'SV8a', name:'Terastal Festival (SV8a)', game:'Pokémon', open:true},
+  {id:'SV9',  name:'Battle Partners (SV9)',    game:'Pokémon', open:true},
+  {id:'OP09', name:'One Piece OP-09',          game:'One Piece',open:true},
+  {id:'ACC',  name:'อุปกรณ์เสริม / Accessories',game:'-',       open:true},
+  {id:'GRD',  name:'การ์ดแยกใบ / Graded',       game:'-',       open:true},
+];
+
+let PRODUCTS = [
+  {code:'8859001', name:'Pokémon SV8a Terastal Festival · Booster Box', cat:'Booster Box', set:'SV8a', vendor:'003', cost:4200, price:5490, stock:6,  ico:'📦'},
+  {code:'8859002', name:'Pokémon SV8a · Booster Pack (ซองสุ่ม)',        cat:'Booster Pack',set:'SV8a', vendor:'003', cost:140,  price:199,  stock:112,ico:'🎴'},
+  {code:'8859003', name:'Pokémon SV9 Battle Partners · Booster Box',    cat:'Booster Box', set:'SV9',  vendor:'001', cost:3900, price:4990, stock:3,  ico:'📦'},
+  {code:'8859004', name:'Pokémon SV9 · Booster Pack',                   cat:'Booster Pack',set:'SV9',  vendor:'001', cost:130,  price:180,  stock:86, ico:'🎴'},
+  {code:'8859005', name:'One Piece OP-09 · Booster Box (JP)',           cat:'Booster Box', set:'OP09', vendor:'002', cost:2600, price:3490, stock:4,  ico:'📦'},
+  {code:'8859006', name:'One Piece OP-09 · Booster Pack',               cat:'Booster Pack',set:'OP09', vendor:'002', cost:110,  price:159,  stock:64, ico:'🎴'},
+  {code:'8859007', name:'Pikachu ex SAR · PSA 10',                      cat:'การ์ดแยกใบ',  set:'GRD',  vendor:'002', cost:12000,price:18900,stock:1,  ico:'✨'},
+  {code:'8859008', name:'Charizard ex SIR · SV3a (ใบเปล่า)',            cat:'การ์ดแยกใบ',  set:'GRD',  vendor:'004', cost:5200, price:7900, stock:2,  ico:'🔥'},
+  {code:'8859009', name:'Luffy Leader Parallel OP-09',                  cat:'การ์ดแยกใบ',  set:'GRD',  vendor:'004', cost:1800, price:2790, stock:3,  ico:'🏴‍☠️'},
+  {code:'8859010', name:'Sleeve Ultra Pro 66x91 (100 ซอง)',             cat:'อุปกรณ์',     set:'ACC',  vendor:'003', cost:95,   price:189,  stock:48, ico:'🛡️'},
+  {code:'8859011', name:'Deck Box Dragon Shield · ดำ',                  cat:'อุปกรณ์',     set:'ACC',  vendor:'003', cost:180,  price:350,  stock:22, ico:'🗃️'},
+  {code:'8859012', name:'Playmat Siatoy TCG (Limited)',                 cat:'อุปกรณ์',     set:'ACC',  vendor:'003', cost:220,  price:490,  stock:15, ico:'🟨'},
+  {code:'8859013', name:'Toploader 35pt (25 ชิ้น)',                     cat:'อุปกรณ์',     set:'ACC',  vendor:'003', cost:60,   price:120,  stock:9,  ico:'📄'},
+  {code:'8859014', name:'Pokémon SV8a · Elite Trainer Box',             cat:'ETB',        set:'SV8a', vendor:'001', cost:1450, price:1990, stock:5,  ico:'🎁'},
+  {code:'8859015', name:'One Piece OP-09 · Starter Deck ST-21',         cat:'Starter',    set:'OP09', vendor:'002', cost:390,  price:590,  stock:11, ico:'🃏'},
+  {code:'8859016', name:'Booster Bundle SV9 (6 ซอง)',                   cat:'Bundle',     set:'SV9',  vendor:'001', cost:780,  price:1090, stock:7,  ico:'🎒'},
+];
+
+const MEMBERS = [
+  {id:'M001', name:'คุณต้น', tel:'0891234567', point:1240, tier:'ทอง',  spend:82400},
+  {id:'M002', name:'คุณแบงค์', tel:'0812223344', point:380, tier:'เงิน', spend:19800},
+  {id:'M003', name:'คุณฟิล์ม', tel:'0955556677', point:96,  tier:'ทั่วไป',spend:5400},
+];
+
+let BILLS = [
+  {no:'INV-260820-014', time:'19:42', items:3, sub:6280, disc:280, fee:0,   total:6000, pay:'transfer', by:'พนักงาน A', status:'ปกติ', slip:true},
+  {no:'INV-260820-013', time:'19:05', items:1, sub:199,  disc:0,   fee:0,   total:199,  pay:'cash',     by:'พนักงาน A', status:'ปกติ', slip:false},
+  {no:'INV-260820-012', time:'18:30', items:6, sub:2340, disc:140, fee:0,   total:2200, pay:'transfer', by:'พนักงาน B', status:'ปกติ', slip:false},
+  {no:'INV-260820-011', time:'17:58', items:2, sub:5490, disc:0,   fee:164, total:5654, pay:'credit',   by:'พนักงาน A', status:'ปกติ', slip:true},
+  {no:'INV-260820-010', time:'17:12', items:1, sub:18900,disc:900, fee:0,   total:18000,pay:'transfer', by:'หัวหน้า',   status:'ปกติ', slip:true},
+  {no:'INV-260820-009', time:'16:40', items:4, sub:796,  disc:0,   fee:0,   total:796,  pay:'cash',     by:'พนักงาน B', status:'ยกเลิก',slip:false},
+  {no:'OPN-260820-002', time:'15:20', items:2, sub:398,  disc:398, fee:0,   total:0,    pay:'owner',    by:'เจ้าของ',   status:'เปิดการ์ด',slip:false},
+];
+
+const STATEMENT = [
+  {time:'19:43', amt:6000,  ref:'KBANK x1234', match:'INV-260820-014', diff:0,    st:'ok'},
+  {time:'18:31', amt:2100,  ref:'KBANK x8871', match:'INV-260820-012', diff:-100, st:'diff'},
+  {time:'17:13', amt:18000, ref:'SCB  x4420',  match:'INV-260820-010', diff:0,    st:'ok'},
+  {time:'16:02', amt:1990,  ref:'KBANK x2210', match:'-',              diff:1990, st:'none'},
+  {time:'14:50', amt:490,   ref:'KBANK x9903', match:'INV-260820-006', diff:0,    st:'ok'},
+  {time:'13:22', amt:3290,  ref:'SCB  x1180',  match:'INV-260820-004', diff:-200, st:'diff'},
+];
+
+/* ---------- HELPERS ---------- */
+const $ = s => document.querySelector(s);
+const money = n => Number(n).toLocaleString('th-TH', {maximumFractionDigits:2});
+const P = c => PRODUCTS.find(p => p.code === c);
+const vName = id => (VENDORS.find(v=>v.id===id)||{}).name || '-';
+const setName = id => (SETS.find(s=>s.id===id)||{}).name || '-';
+
+function toast(msg, kind){
+  const d = document.createElement('div');
+  d.className = 'toast ' + (kind||'');
+  d.innerHTML = msg;
+  $('#toasts').appendChild(d);
+  const box = $('#toasts');
+  while(box.children.length > 3) box.firstChild.remove();
+  setTimeout(()=>{d.style.transition='.3s';d.style.opacity='0';d.style.transform='translateX(30px)';setTimeout(()=>d.remove(),300)}, 3200);
+}
+function openModal(html, wide){
+  $('#modalBox').className = 'modal' + (wide ? ' wide' : '');
+  $('#modalBox').innerHTML = html;
+  $('#modalBg').classList.add('on');
+}
+function closeModal(){ $('#modalBg').classList.remove('on'); }
+function toggleSidebar(){ $('#sidebar').classList.toggle('open'); }
+
+function applyTheme(t){
+  S.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  const b = $('#themeBtn');
+  if(b) b.textContent = t === 'dark' ? '☀️' : '🌙';
+  try{ localStorage.setItem('siatoy-theme', t); }catch(e){}
+  if(S.page === 'settings') render();
+}
+function toggleTheme(){
+  applyTheme(S.theme === 'dark' ? 'light' : 'dark');
+  toast(S.theme === 'dark' ? '🌙 โหมดกลางคืน · ธีมดำ-ทอง' : '☀️ โหมดกลางวัน · ธีมขาว-เขียว');
+}
+function initTheme(){
+  let t = null;
+  try{ t = localStorage.getItem('siatoy-theme'); }catch(e){}
+  if(!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  applyTheme(t);
+}
+function setRole(r){
+  S.role = r;
+  document.body.className = 'role-' + r;
+  document.querySelectorAll('.role-switch button').forEach(b => b.classList.toggle('on', b.dataset.role === r));
+  const names = {admin:'พนักงานหน้าร้าน', sup:'หัวหน้างาน', owner:'เจ้าของร้าน'};
+  toast('สลับสิทธิ์เป็น <b>' + names[r] + '</b>');
+  render();
+}
+function go(p){
+  S.page = p;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('on', n.dataset.page === p));
+  $('#sidebar').classList.remove('open');
+  render();
+  $('#main').scrollTop = 0;
+}
+
+/* ---------- CART ---------- */
+function addToCart(code){
+  const p = P(code);
+  if(!p) { toast('ไม่พบสินค้าบาร์โค้ดนี้', 'err'); return; }
+  const line = S.cart.find(c => c.code === code);
+  const inCart = line ? line.qty : 0;
+  if(inCart + 1 > p.stock){ toast('สต๊อกไม่พอ · เหลือ ' + p.stock + ' ชิ้น', 'err'); return; }
+  if(line) line.qty++;
+  else S.cart.push({code, qty:1, disc:0});
+  renderCart();
+  toast('เพิ่ม <b>' + p.name.slice(0,28) + '…</b>', 'ok');
+}
+function chQty(code, d){
+  const l = S.cart.find(c => c.code === code); if(!l) return;
+  const p = P(code);
+  l.qty += d;
+  if(l.qty > p.stock){ l.qty = p.stock; toast('สต๊อกเหลือ ' + p.stock, 'err'); }
+  if(l.qty <= 0) S.cart = S.cart.filter(c => c.code !== code);
+  renderCart();
+}
+function rmLine(code){ S.cart = S.cart.filter(c => c.code !== code); renderCart(); }
+function askLineDisc(code){
+  const l = S.cart.find(c => c.code === code); const p = P(code);
+  openModal(`
+    <div class="modal-head"><h3>ส่วนลดรายชิ้น</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div style="font-size:13.5px;margin-bottom:14px">${p.name}<br><span class="mini">ราคาปกติ ${money(p.price)} ฿ × ${l.qty}</span></div>
+      <div class="field"><label>ลดต่อชิ้น (บาท)</label>
+        <input class="inp" id="dcv" type="number" value="${l.disc}" placeholder="0"></div>
+      <div class="flex wrap" style="gap:7px">
+        ${[20,50,100,200].map(v=>`<button class="btn sm" onclick="document.getElementById('dcv').value=${v}">-${v} ฿</button>`).join('')}
+        <button class="btn sm" onclick="document.getElementById('dcv').value=${Math.round(p.price*0.1)}">-10%</button>
+      </div>
+      <div class="notice warn" style="margin-top:14px">⚠️ ส่วนลดทุกครั้งถูกบันทึกชื่อผู้กด เวลา และเหตุผล เพื่อนำไปหักในรายงานหลังบ้าน</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn gold" onclick="applyLineDisc('${code}')">ใช้ส่วนลด</button>
+    </div>`);
+}
+function applyLineDisc(code){
+  const l = S.cart.find(c => c.code === code);
+  l.disc = Math.max(0, Math.min(P(code).price, Number($('#dcv').value) || 0));
+  closeModal(); renderCart();
+  toast(l.disc ? 'ใส่ส่วนลด ' + money(l.disc) + ' ฿/ชิ้น' : 'ล้างส่วนลดแล้ว');
+}
+function calc(){
+  let sub = 0, disc = 0;
+  S.cart.forEach(l => { const p = P(l.code); sub += p.price * l.qty; disc += l.disc * l.qty; });
+  let bd = S.billDiscountType === 'pct' ? (sub - disc) * S.billDiscount / 100 : S.billDiscount;
+  bd = Math.min(bd, sub - disc);
+  const net = sub - disc - bd;
+  const fee = (S.pay === 'credit' && !S.ownerFree) ? Math.round(net * S.creditFee) / 100 : 0;
+  return {sub, disc, bd, net, fee, total: S.ownerFree ? 0 : net + fee, count: S.cart.reduce((a,c)=>a+c.qty,0)};
+}
+function setPay(p){ S.pay = p; S.ownerFree = false; renderCart(); }
+function askBillDisc(){
+  openModal(`
+    <div class="modal-head"><h3>ส่วนลดท้ายบิล</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="seg" style="margin-bottom:14px">
+        <button class="${S.billDiscountType==='baht'?'on':''}" onclick="S.billDiscountType='baht';askBillDisc()">บาท (฿)</button>
+        <button class="${S.billDiscountType==='pct'?'on':''}" onclick="S.billDiscountType='pct';askBillDisc()">เปอร์เซ็นต์ (%)</button>
+      </div>
+      <div class="field"><label>จำนวนส่วนลด</label><input class="inp" id="bdv" type="number" value="${S.billDiscount}"></div>
+      <div class="field"><label>เหตุผล (บันทึกในรายงาน)</label>
+        <select class="inp" id="bdr">
+          <option>ลูกค้าประจำ</option><option>ต่อรองหน้าร้าน</option><option>ซื้อยกกล่อง</option>
+          <option>โปรโมชันงานอีเวนต์</option><option>อื่น ๆ</option>
+        </select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="S.billDiscount=0;closeModal();renderCart()">ล้างส่วนลด</button>
+      <button class="btn gold" onclick="S.billDiscount=Number(document.getElementById('bdv').value)||0;closeModal();renderCart()">ตกลง</button>
+    </div>`);
+}
+function askMember(){
+  openModal(`
+    <div class="modal-head"><h3>ระบุสมาชิก</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>รหัสสมาชิก หรือ เบอร์โทรศัพท์</label>
+        <input class="inp" id="mkey" placeholder="เช่น M001 หรือ 0891234567" autofocus></div>
+      <div class="mini" style="margin-bottom:10px">ตัวอย่างในเดโม — กดเลือกได้เลย</div>
+      ${MEMBERS.map(m=>`<div class="ci" style="cursor:pointer" onclick="pickMember('${m.id}')">
+        <div class="info"><div class="nm">${m.name} <span class="tag gold">${m.tier}</span></div>
+        <div class="meta">${m.id} · ${m.tel} · ${money(m.point)} แต้ม</div></div><div style="align-self:center">→</div></div>`).join('')}
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="S.member=null;closeModal();renderCart()">ไม่ระบุ</button></div>`);
+}
+function pickMember(id){ S.member = MEMBERS.find(m=>m.id===id); closeModal(); renderCart(); toast('สมาชิก: <b>'+S.member.name+'</b>'); }
+
+/* ---------- CONFIRM BILL ---------- */
+function confirmBill(free){
+  if(!S.cart.length){ toast('ยังไม่มีสินค้าในบิล', 'err'); return; }
+  if(free && S.role !== 'owner'){ toast('เฉพาะเจ้าของร้านเท่านั้น', 'err'); return; }
+  S.ownerFree = !!free;
+  const c = calc();
+  const payName = {cash:'💵 เงินสด', transfer:'📱 เงินโอน', credit:'💳 บัตรเครดิต'}[S.pay];
+  openModal(`
+    <div class="modal-head"><h3>${free ? '👑 เปิดการ์ด (ตัดสต๊อก ไม่รับเงิน)' : 'ตรวจสอบรายการก่อนยืนยันการขาย'}</h3>
+      <button class="x" onclick="cancelConfirm()">✕</button></div>
+    <div class="modal-body">
+      <div class="bill-total" ${free?'style="background:linear-gradient(180deg,var(--purple-a),transparent);border-color:var(--purple-line)"':''}>
+        <div class="lbl">${free ? 'ยอดที่ต้องชำระ' : 'ยอดรวมที่ต้องรับชำระ'}</div>
+        <div class="amt gold-text">฿ ${money(c.total)}</div>
+        <div class="cnt">${c.count} ชิ้น · ${payName}${c.fee?' (+ค่าธรรมเนียม '+S.creditFee+'%)':''}</div>
+      </div>
+      <div class="bill-lines">
+        ${S.cart.map(l=>{const p=P(l.code);const net=(p.price-l.disc)*l.qty;return `
+          <div class="bill-line"><div class="q">${l.qty}×</div><div class="n">${p.name}
+          ${l.disc?`<div class="mini" style="color:var(--red)">ลด ${money(l.disc)} ฿/ชิ้น</div>`:''}</div>
+          <div class="p">${money(net)}${l.disc?`<s>${money(p.price*l.qty)}</s>`:''}</div></div>`}).join('')}
+      </div>
+      <div class="sum-row">ยอดรวมก่อนลด <b>${money(c.sub)} ฿</b></div>
+      ${c.disc?`<div class="sum-row disc">ส่วนลดรายชิ้น <b>-${money(c.disc)} ฿</b></div>`:''}
+      ${c.bd?`<div class="sum-row disc">ส่วนลดท้ายบิล <b>-${money(c.bd)} ฿</b></div>`:''}
+      ${c.fee?`<div class="sum-row fee">ค่าธรรมเนียมบัตร ${S.creditFee}% <b>+${money(c.fee)} ฿</b></div>`:''}
+      ${S.member?`<div class="sum-row">สมาชิก <b>${S.member.name} (+${Math.floor(c.total/100)} แต้ม)</b></div>`:''}
+      ${free?`<div class="notice" style="margin-top:14px;background:var(--purple-a);border:1px solid var(--purple-line);color:var(--purple)">
+        👑 รายการนี้จะ <b>ตัดสต๊อกออกโดยไม่บันทึกเป็นรายได้</b> และถูกแยกไว้ในรายงาน “เปิดการ์ด/ผู้บริหาร” ต่างหาก ไม่กระทบยอดขายและกำไรของร้าน</div>`
+      :`<div class="notice warn" style="margin-top:14px">⚠️ ตรวจสอบให้แน่ใจก่อนกดยืนยัน — หากกดผิดต้อง <b>ยกเลิกบิลทั้งใบ</b> แล้วสแกนใหม่ (ต้องใช้สิทธิ์หัวหน้างานขึ้นไป)</div>`}
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="cancelConfirm()">← กลับไปแก้ไข</button>
+      <button class="btn gold" style="min-width:190px;justify-content:center;font-size:15px;padding:12px 20px"
+        onclick="doPay(${free})">${free ? '👑 ยืนยันตัดสต๊อก' : '✓ ยืนยันรับชำระเงิน'}</button>
+    </div>`, true);
+}
+function cancelConfirm(){ S.ownerFree = false; closeModal(); renderCart(); }
+function doPay(free){
+  const c = calc();
+  const seq = String(BILLS.length + 8).padStart(3,'0');
+  const no = (free ? 'OPN-' : 'INV-') + '260820-' + seq;
+  S.cart.forEach(l => { const p = P(l.code); p.stock -= l.qty; });
+  BILLS.unshift({no, time:new Date().toTimeString().slice(0,5), items:c.count, sub:c.sub,
+    disc:c.disc + c.bd, fee:c.fee, total:c.total, pay: free ? 'owner' : S.pay,
+    by:{admin:'พนักงาน A',sup:'หัวหน้า',owner:'เจ้าของ'}[S.role], status: free ? 'เปิดการ์ด' : 'ปกติ', slip:false});
+  closeModal();
+  openModal(`
+    <div class="modal-body" style="text-align:center;padding:34px 24px">
+      <div style="font-size:56px;line-height:1">${free?'👑':'✅'}</div>
+      <h2 style="margin:12px 0 4px;font-weight:500">${free?'ตัดสต๊อกเรียบร้อย':'ขายสำเร็จ'}</h2>
+      <div class="mini">${no} · ${c.count} ชิ้น</div>
+      <div style="font-size:34px;font-weight:600;margin:14px 0" class="gold-text">฿ ${money(c.total)}</div>
+      ${S.member?`<div class="tag gold">สะสมแต้มให้ ${S.member.name} +${Math.floor(c.total/100)} แต้ม</div>`:''}
+      <div class="hr"></div>
+      <div class="flex" style="justify-content:center;gap:9px;flex-wrap:wrap">
+        <button class="btn" onclick="closeModal()">🖨️ พิมพ์ใบเสร็จ</button>
+        ${!free&&S.pay==='transfer'?`<button class="btn" onclick="closeModal();toast('เปิดหน้าแนบสลิป (เดโม)')">📎 แนบสลิปโอน</button>`:''}
+        <button class="btn gold" onclick="closeModal()">เริ่มบิลใหม่</button>
+      </div>
+    </div>`);
+  S.cart = []; S.billDiscount = 0; S.member = null; S.ownerFree = false; S.pay = 'cash';
+  renderCart();
+  setTimeout(()=>toast('บันทึกบิล <b>' + no + '</b> แล้ว', 'ok'), 200);
+}
+function voidBill(no){
+  if(S.role === 'admin'){
+    openModal(`
+      <div class="modal-head"><h3>🔒 ต้องใช้สิทธิ์หัวหน้างาน</h3><button class="x" onclick="closeModal()">✕</button></div>
+      <div class="modal-body">
+        <div class="notice red">พนักงานหน้าร้านมีสิทธิ์ <b>ทำบิลและรับเงิน</b> เท่านั้น การยกเลิก/แก้ไขบิลต้องให้หัวหน้างานขึ้นไปเป็นผู้อนุมัติ</div>
+        <div class="field" style="margin-top:14px"><label>ใส่รหัส PIN ของหัวหน้างาน</label>
+          <input class="inp" type="password" placeholder="••••••"></div>
+      </div>
+      <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">ปิด</button>
+        <button class="btn gold" onclick="closeModal();toast('เดโม: ลองสลับสิทธิ์เป็นหัวหน้าที่มุมขวาบน')">อนุมัติ</button></div>`);
+    return;
+  }
+  const b = BILLS.find(x=>x.no===no);
+  openModal(`
+    <div class="modal-head"><h3>ยกเลิกบิล ${no}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="notice warn">ระบบไม่แก้ไขรายการในบิลเดิม แต่ใช้วิธี <b>ยกเลิกทั้งใบแล้วสแกนใหม่</b> เพื่อให้ประวัติตรวจสอบย้อนหลังได้ครบ · สต๊อก ${b.items} ชิ้นจะถูกคืนเข้าคลังอัตโนมัติ</div>
+      <div class="field" style="margin-top:14px"><label>เหตุผลการยกเลิก</label>
+        <select class="inp"><option>ลืมใส่ส่วนลด</option><option>คีย์ราคาผิด</option><option>สแกนสินค้าผิดชิ้น</option><option>ลูกค้ายกเลิกการซื้อ</option></select></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">ไม่ยกเลิก</button>
+      <button class="btn danger" onclick="doVoid('${no}')">ยืนยันยกเลิกบิล</button></div>`);
+}
+function doVoid(no){ const b = BILLS.find(x=>x.no===no); b.status = 'ยกเลิก'; closeModal(); render(); toast('ยกเลิกบิล ' + no + ' แล้ว · คืนสต๊อกอัตโนมัติ', 'err'); }
+
+/* ---------- SCANNER SIM ---------- */
+function openCam(cb){
+  openModal(`
+    <div class="modal-head"><h3>📷 สแกนด้วยกล้อง</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="scanner-box"><div class="frame"></div><div class="scan-line"></div>
+        <div class="hint">เล็งบาร์โค้ดให้อยู่ในกรอบ — ใช้ได้ทั้ง iPad และมือถือ</div></div>
+      <div class="notice info" style="margin-top:14px">💡 หน้างานจริงใช้กล้องอ่านบาร์โค้ดโดยตรง หรือใช้เครื่องยิงบาร์โค้ดก็ได้ทั้งคู่ · ในเดโมกดเลือกสินค้าด้านล่างเพื่อจำลองการยิง</div>
+      <div style="margin-top:12px;max-height:210px;overflow:auto">
+        ${PRODUCTS.slice(0,8).map(p=>`<div class="ci" style="cursor:pointer" onclick="closeModal();${cb}('${p.code}')">
+          <div style="font-size:20px">${p.ico}</div><div class="info"><div class="nm">${p.name}</div>
+          <div class="meta">${p.code} · คงเหลือ ${p.stock}</div></div></div>`).join('')}
+      </div>
+    </div>`);
+}
+function scanEnter(e){
+  if(e.key !== 'Enter') return;
+  const v = e.target.value.trim(); e.target.value = '';
+  if(!v) return;
+  const n = v.replace(/^0+/, '');
+  const p = PRODUCTS.find(x => x.code === v || x.code === n || x.name.toLowerCase().includes(v.toLowerCase()));
+  if(p) addToCart(p.code); else toast('ไม่พบสินค้า: ' + v, 'err');
+}
+
+/* ---------- STOCK IN/OUT ---------- */
+function stAdd(code){
+  const l = S.scanList.find(x=>x.code===code);
+  if(l) l.qty++; else S.scanList.push({code, qty:1});
+  render(); toast('สแกนแล้ว: ' + P(code).name.slice(0,26) + '…', 'ok');
+}
+function stEnter(e){
+  if(e.key!=='Enter') return;
+  const v = e.target.value.trim(); e.target.value='';
+  const n = v.replace(/^0+/, '');
+  const p = PRODUCTS.find(x=>x.code===v || x.code===n || x.name.toLowerCase().includes(v.toLowerCase()));
+  if(p) stAdd(p.code); else toast('ไม่พบสินค้า: '+v,'err');
+}
+function stMode(m){ S.scanMode = m; S.scanList = []; render(); }
+function stCommit(){
+  if(!S.scanList.length){ toast('ยังไม่ได้สแกนสินค้า','err'); return; }
+  const sign = S.scanMode === 'in' ? 1 : -1;
+  S.scanList.forEach(l => { P(l.code).stock += sign * l.qty; });
+  const n = S.scanList.reduce((a,c)=>a+c.qty,0);
+  S.scanList = []; render();
+  toast((S.scanMode==='in'?'รับเข้าคลัง ':'ตัดออกจากคลัง ') + n + ' ชิ้น · บันทึกผู้ทำรายการและเวลาแล้ว', 'ok');
+}
+
+/* ---------- PRICE / SET ---------- */
+function editSetPrice(setId){
+  const items = PRODUCTS.filter(p=>p.set===setId);
+  openModal(`
+    <div class="modal-head"><h3>ปรับราคาขาย · ${setName(setId)}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="notice warn">📌 การเปลี่ยนราคามีผลกับ <b>สินค้าคงเหลือในเซตนี้เท่านั้น</b> — บิลที่ขายไปแล้วยังคงบันทึกด้วยราคาเดิม เพื่อไม่ให้กระทบยอดขายและกำไรย้อนหลัง</div>
+      <div style="margin-top:14px">
+      ${items.map(p=>`<div class="flex" style="padding:9px 0;border-bottom:1px solid var(--line)">
+        <div style="flex:1"><div style="font-size:13px">${p.ico} ${p.name}</div>
+        <div class="mini">คงเหลือ ${p.stock} ชิ้น · ราคาปัจจุบัน ${money(p.price)} ฿</div></div>
+        <input class="inp" style="width:110px" type="number" value="${p.price}" data-pc="${p.code}"></div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn gold" onclick="saveSetPrice()">บันทึกราคาใหม่</button></div>`, true);
+}
+function saveSetPrice(){
+  document.querySelectorAll('[data-pc]').forEach(i => { P(i.dataset.pc).price = Number(i.value)||P(i.dataset.pc).price; });
+  closeModal(); render(); toast('อัปเดตราคาเซตแล้ว · มีผลกับสต๊อกคงเหลือเท่านั้น', 'ok');
+}
+
+/* ==========================================================
+   PAGE RENDERERS
+   ========================================================== */
+function head(t, s, right){
+  return `<div class="page-head"><div><h1>${t}</h1><p>${s}</p></div><div class="spacer"></div>${right||''}</div>`;
+}
+
+/* ---- POS ---- */
+function pagePOS(){
+  return head('ขายสินค้า (POS)', 'ยิงบาร์โค้ดด้วยเครื่องสแกน หรือใช้กล้องมือถือ/iPad',
+    `<div class="flex wrap">
+      <button class="btn" onclick="go('scan')">📥 รับเข้า/ตัดออก</button>
+      <button class="btn" onclick="openCam('addToCart')">📷 สแกนด้วยกล้อง</button>
+     </div>`) + `
+  <div class="pos-wrap">
+    <div>
+      <div class="scan-bar">
+        <input class="scan-input" placeholder="🔍 ยิงบาร์โค้ด หรือพิมพ์ชื่อสินค้า แล้วกด Enter…" onkeydown="scanEnter(event)" autofocus>
+      </div>
+      <div class="flex wrap" style="margin-bottom:12px">
+        <div class="seg" id="catSeg">
+          ${['ทั้งหมด','Booster Box','Booster Pack','การ์ดแยกใบ','อุปกรณ์','ETB','Starter','Bundle']
+            .map((c,i)=>`<button class="${i===0?'on':''}" onclick="filterCat(this,'${c}')">${c}</button>`).join('')}
+        </div>
+      </div>
+      <div class="prod-grid" id="prodGrid">${prodCards('ทั้งหมด')}</div>
+    </div>
+    <div class="cart-panel" id="cartPanel">
+      <div class="cart-head" onclick="if(window.innerWidth<980)this.parentNode.classList.toggle('open')">
+        🧾 <b>บิลปัจจุบัน</b><span class="tag gold" id="cartCount">0 ชิ้น</span>
+        <button class="btn sm ghost right" onclick="event.stopPropagation();S.cart=[];S.billDiscount=0;S.member=null;renderCart()">ล้างบิล</button>
+      </div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-foot" id="cartFoot"></div>
+    </div>
+  </div>`;
+}
+function prodCards(cat){
+  return PRODUCTS.filter(p => cat === 'ทั้งหมด' || p.cat === cat).map(p => `
+    <div class="prod" onclick="addToCart('${p.code}')">
+      ${p.stock <= 3 ? `<div class="low">เหลือ ${p.stock}</div>` : ''}
+      <div class="thumb">${p.ico}</div>
+      <div class="nm">${p.name}</div>
+      <div class="pr">฿ ${money(p.price)}</div>
+      <div class="st">คงเหลือ ${p.stock} · ${p.code}</div>
+    </div>`).join('');
+}
+function filterCat(el, c){
+  el.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  $('#prodGrid').innerHTML = prodCards(c);
+}
+function renderCart(){
+  if(S.page !== 'pos') return;
+  const items = $('#cartItems'), foot = $('#cartFoot'), cnt = $('#cartCount');
+  if(!items) return;
+  const c = calc();
+  cnt.textContent = c.count + ' ชิ้น';
+  items.innerHTML = S.cart.length ? S.cart.map(l => {
+    const p = P(l.code); const net = (p.price - l.disc) * l.qty;
+    return `<div class="ci">
+      <div class="info">
+        <div class="nm">${p.ico} ${p.name}</div>
+        <div class="meta">${p.code} · คงเหลือ ${p.stock}</div>
+        <div class="price-row">
+          <div class="qty"><button onclick="chQty('${l.code}',-1)">−</button><span>${l.qty}</span><button onclick="chQty('${l.code}',1)">+</button></div>
+          <button class="disc-btn ${l.disc?'act':''}" onclick="askLineDisc('${l.code}')">${l.disc?'ลด '+money(l.disc)+' ฿':'+ ส่วนลด'}</button>
+          <div class="amt"><b>${money(net)}</b>${l.disc?`<span class="was">${money(p.price*l.qty)}</span>`:''}</div>
+        </div>
+      </div>
+      <button class="x" onclick="rmLine('${l.code}')">✕</button>
+    </div>`;
+  }).join('') : `<div class="cart-empty"><span class="big">🛒</span>ยิงบาร์โค้ด หรือแตะสินค้าทางซ้าย<br>เพื่อเริ่มทำบิล</div>`;
+
+  foot.innerHTML = `
+    <div class="member-row">
+      <button class="btn sm" style="flex:1;justify-content:center" onclick="askMember()">
+        ${S.member ? '👤 ' + S.member.name + ' · ' + money(S.member.point) + ' แต้ม' : '👤 ระบุสมาชิก / เบอร์โทร'}</button>
+      <button class="btn sm" onclick="askBillDisc()">🏷️ ลดท้ายบิล</button>
+    </div>
+    <div class="sum-row">ยอดรวม <b>${money(c.sub)} ฿</b></div>
+    ${c.disc?`<div class="sum-row disc">ส่วนลดรายชิ้น <b>-${money(c.disc)} ฿</b></div>`:''}
+    ${c.bd?`<div class="sum-row disc">ส่วนลดท้ายบิล <b>-${money(c.bd)} ฿</b></div>`:''}
+    ${c.fee?`<div class="sum-row fee">ค่าธรรมเนียมบัตร ${S.creditFee}% <b>+${money(c.fee)} ฿</b></div>`:''}
+    <div class="pay-grid">
+      <div class="pay-btn ${S.pay==='cash'?'on':''}" onclick="setPay('cash')"><span class="i">💵</span>เงินสด</div>
+      <div class="pay-btn ${S.pay==='transfer'?'on':''}" onclick="setPay('transfer')"><span class="i">📱</span>เงินโอน</div>
+      <div class="pay-btn ${S.pay==='credit'?'on':''}" onclick="setPay('credit')"><span class="i">💳</span>บัตร +${S.creditFee}%</div>
+    </div>
+    <div class="sum-total"><span>ต้องชำระ</span><b class="gold-text">฿ ${money(c.total)}</b></div>
+    <button class="btn gold block" style="margin-top:12px;padding:14px;font-size:16px" onclick="confirmBill(false)">
+      ✓ ยืนยันการขาย</button>
+    <button class="btn block owner-only" style="margin-top:8px;border-color:var(--purple-line);color:var(--purple);background:var(--purple-a2)"
+      onclick="confirmBill(true)">👑 เปิดการ์ด · ตัดสต๊อกไม่รับเงิน</button>
+    <div class="mini" style="text-align:center;margin-top:9px">หน้าจอนี้ไม่แสดงราคาต้นทุนให้พนักงานขายเห็น</div>`;
+}
+
+/* ---- BILLS ---- */
+function pageBills(){
+  const payTag = p => ({cash:'<span class="tag green">💵 เงินสด</span>',transfer:'<span class="tag blue">📱 โอน</span>',
+    credit:'<span class="tag purple">💳 บัตร</span>',owner:'<span class="tag purple">👑 เปิดการ์ด</span>'})[p];
+  const total = BILLS.filter(b=>b.status==='ปกติ').reduce((a,b)=>a+b.total,0);
+  return head('บิลขาย / ยกเลิกบิล', 'วันนี้ · 20 ส.ค. 2569', `<button class="btn">📤 ส่งออก Excel</button>`) + `
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="stat"><div class="lbl">ยอดขายวันนี้</div><div class="val g">฿ ${money(total)}</div><div class="sub">${BILLS.filter(b=>b.status==='ปกติ').length} บิล</div></div>
+    <div class="stat"><div class="lbl">ส่วนลดรวม</div><div class="val red">฿ ${money(BILLS.filter(b=>b.status==='ปกติ').reduce((a,b)=>a+b.disc,0))}</div><div class="sub">หักในงบดุลหลังบ้าน</div></div>
+    <div class="stat"><div class="lbl">บิลยกเลิก</div><div class="val">${BILLS.filter(b=>b.status==='ยกเลิก').length}</div><div class="sub">คืนสต๊อกอัตโนมัติ</div></div>
+    <div class="stat"><div class="lbl">เปิดการ์ด (ผู้บริหาร)</div><div class="val" style="color:var(--purple)">${BILLS.filter(b=>b.status==='เปิดการ์ด').length}</div><div class="sub">แยกออกจากยอดขาย</div></div>
+  </div>
+  <div class="card tight"><div class="tbl-wrap"><table>
+    <thead><tr><th>เลขที่บิล</th><th>เวลา</th><th class="num">ชิ้น</th><th class="num">ยอดรวม</th><th class="num">ส่วนลด</th><th class="num">สุทธิ</th><th>ชำระ</th><th>ผู้ทำรายการ</th><th>สถานะ</th><th></th></tr></thead>
+    <tbody>${BILLS.map(b=>`<tr style="${b.status==='ยกเลิก'?'opacity:.45':''}">
+      <td><b style="font-weight:400">${b.no}</b></td><td>${b.time}</td><td class="num">${b.items}</td>
+      <td class="num">${money(b.sub)}</td><td class="num" style="color:var(--red)">${b.disc?'-'+money(b.disc):'-'}</td>
+      <td class="num"><b style="font-weight:500;color:var(--gold2)">${money(b.total)}</b>${b.fee?`<div class="mini">+ค่าธรรมเนียม ${money(b.fee)}</div>`:''}</td>
+      <td>${payTag(b.pay)} ${b.slip?'<span class="tag">📎</span>':''}</td><td>${b.by}</td>
+      <td>${b.status==='ปกติ'?'<span class="tag green">ปกติ</span>':b.status==='ยกเลิก'?'<span class="tag red">ยกเลิก</span>':'<span class="tag purple">เปิดการ์ด</span>'}</td>
+      <td class="num">${b.status==='ปกติ'?`<button class="btn sm danger" onclick="voidBill('${b.no}')">ยกเลิก</button>`:''}</td>
+    </tr>`).join('')}</tbody></table></div></div>
+  <div class="notice info" style="margin-top:14px">🔒 พนักงานหน้าร้าน (Admin) กดยกเลิกบิลเองไม่ได้ ต้องใช้สิทธิ์หัวหน้างานขึ้นไปอนุมัติ — ลองสลับสิทธิ์ที่มุมขวาบนเพื่อดูความต่าง</div>`;
+}
+
+/* ---- SCAN IN/OUT ---- */
+function pageScan(){
+  const isIn = S.scanMode === 'in';
+  const n = S.scanList.reduce((a,c)=>a+c.qty,0);
+  return head('สแกนรับเข้า / ตัดออกจากคลัง', 'ทุกการเคลื่อนไหวของสินค้าต้องสแกน เพื่อให้มีประวัติย้อนหลังเสมอ') + `
+  <div class="flex wrap" style="margin-bottom:16px">
+    <div class="seg">
+      <button class="${isIn?'on':''}" onclick="stMode('in')">📥 รับสินค้าเข้าคลัง</button>
+      <button class="${!isIn?'on':''}" onclick="stMode('out')">📤 ตัดสินค้าออกจากคลัง</button>
+    </div>
+  </div>
+  <div class="grid g2" style="grid-template-columns:1fr 380px;align-items:start">
+    <div>
+      <div class="card">
+        <div class="scan-bar" style="margin-bottom:12px">
+          <input class="scan-input" placeholder="🔍 ยิงบาร์โค้ดสินค้าที่จะ${isIn?'รับเข้า':'ตัดออก'} แล้วกด Enter…" onkeydown="stEnter(event)">
+          <button class="btn" onclick="openCam('stAdd')">📷 กล้อง</button>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
+          ${isIn?`
+          <div class="field" style="margin:0"><label>ผู้ฝากขาย / ผู้จำหน่าย</label>
+            <select class="inp">${VENDORS.map(v=>`<option>${v.id} · ${v.name}</option>`).join('')}</select></div>
+          <div class="field" style="margin:0"><label>เลขที่เอกสารรับเข้า (PO)</label><input class="inp" value="PO-260820-03"></div>`
+          :`
+          <div class="field" style="margin:0"><label>เหตุผลการตัดออก</label>
+            <select class="inp"><option>ยกไปออกบูธงานอีเวนต์</option><option>โอนไปสาขา/จุดอื่น</option><option>สินค้าเสียหาย</option><option>คืนของให้ผู้ฝากขาย</option><option>ตัวอย่าง/ของแถม</option></select></div>
+          <div class="field" style="margin:0"><label>ปลายทาง</label>
+            <select class="inp"><option>งาน Bangkok TCG Fest (บูธ A12)</option><option>คลังหลังร้าน</option><option>ผู้ฝากขาย</option></select></div>`}
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">📋</span> รายการที่สแกนแล้ว <span class="sub">${n} ชิ้น</span></div>
+        ${S.scanList.length ? S.scanList.map(l=>{const p=P(l.code);return `
+          <div class="ci"><div style="font-size:20px">${p.ico}</div>
+            <div class="info"><div class="nm">${p.name}</div>
+              <div class="meta">${p.code} · คงเหลือปัจจุบัน ${p.stock} → <b style="color:var(--gold2)">${p.stock + (isIn?l.qty:-l.qty)}</b></div></div>
+            <div style="align-self:center" class="tag gold">${isIn?'+':'−'}${l.qty}</div></div>`}).join('')
+          : `<div class="cart-empty"><span class="big">📷</span>ยังไม่มีรายการ — เริ่มยิงบาร์โค้ดได้เลย</div>`}
+        <button class="btn gold block" style="margin-top:12px;padding:12px" onclick="stCommit()">
+          ${isIn?'✓ ยืนยันรับเข้าคลัง':'✓ ยืนยันตัดออกจากคลัง'}</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">🕘</span> ประวัติล่าสุด</div>
+        ${[
+          {t:'20 ส.ค. 18:20',a:'ตัดออก',n:'ยกไปงาน Bangkok TCG Fest',q:'−24 ชิ้น',by:'หัวหน้า',k:'red'},
+          {t:'20 ส.ค. 11:05',a:'รับเข้า',n:'PO-260820-02 · ผู้ฝากขาย 002',q:'+40 ชิ้น',by:'พนักงาน A',k:'green'},
+          {t:'19 ส.ค. 16:44',a:'รับเข้า',n:'PO-260819-05 · ผู้ฝากขาย 001',q:'+120 ชิ้น',by:'พนักงาน B',k:'green'},
+          {t:'19 ส.ค. 09:12',a:'ตัดออก',n:'สินค้าเสียหาย (กล่องบุบ)',q:'−2 ชิ้น',by:'หัวหน้า',k:'red'},
+        ].map(h=>`<div class="ci"><div class="info"><div class="nm">${h.n}</div>
+          <div class="meta">${h.t} · โดย ${h.by}</div></div>
+          <div style="align-self:center" class="tag ${h.k}">${h.q}</div></div>`).join('')}
+      </div>
+      <div class="notice warn" style="margin-top:14px">⚠️ ระบบบังคับสแกนทุกครั้งที่สินค้าเข้า-ออก ทำให้ตรวจสอบย้อนหลังได้ว่าใครหยิบอะไรออกไปเมื่อไหร่ ลดปัญหาสินค้าหายแบบไม่มีประวัติ</div>
+    </div>
+  </div>`;
+}
+
+/* ---- STOCK ---- */
+function pageStock(){
+  const costVal = PRODUCTS.reduce((a,p)=>a+p.cost*p.stock,0);
+  const sellVal = PRODUCTS.reduce((a,p)=>a+p.price*p.stock,0);
+  const qty = PRODUCTS.reduce((a,p)=>a+p.stock,0);
+  return head('สินค้า &amp; สต๊อกคงเหลือ', 'มูลค่าสต๊อกเทียบต้นทุนที่รับเข้า กับราคาขายจริง',
+    `<div class="flex wrap"><button class="btn" onclick="go('labels')">🖨️ พิมพ์สติกเกอร์บาร์โค้ด</button><button class="btn gold">+ เพิ่มสินค้า</button></div>`) + `
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="stat"><div class="lbl">จำนวนสินค้าคงเหลือ</div><div class="val">${money(qty)}</div><div class="sub">${PRODUCTS.length} รายการ (SKU)</div></div>
+    <div class="stat sup-up"><div class="lbl">มูลค่าตามต้นทุน</div><div class="val">฿ ${money(costVal)}</div><div class="sub">ราคารับเข้า</div></div>
+    <div class="stat"><div class="lbl">มูลค่าตามราคาขาย</div><div class="val g">฿ ${money(sellVal)}</div><div class="sub">ถ้าขายหมดทั้งคลัง</div></div>
+    <div class="stat sup-up"><div class="lbl">กำไรคาดหวัง</div><div class="val green">฿ ${money(sellVal-costVal)}</div><div class="sub">${Math.round((sellVal-costVal)/sellVal*100)}% ของราคาขาย</div></div>
+  </div>
+  ${S.role==='admin'?`<div class="notice info" style="margin-bottom:14px">🔒 คุณกำลังดูในสิทธิ์ <b>พนักงานหน้าร้าน</b> — ข้อมูลต้นทุนถูกซ่อนไว้ ดูได้เฉพาะหัวหน้างานและเจ้าของร้าน</div>`:''}
+  <div class="card tight"><div class="tbl-wrap"><table>
+    <thead><tr><th>บาร์โค้ด</th><th>สินค้า</th><th>หมวด</th><th>บล็อกเซต</th><th>ผู้ฝากขาย</th>
+      <th class="num">ต้นทุน</th><th class="num">ราคาขาย</th><th class="num">คงเหลือ</th><th class="num">มูลค่าขาย</th></tr></thead>
+    <tbody>${PRODUCTS.map(p=>`<tr>
+      <td class="mini">${p.code}</td>
+      <td>${p.ico} ${p.name}</td>
+      <td><span class="tag">${p.cat}</span></td>
+      <td class="mini">${p.set}</td>
+      <td class="mini">${p.vendor} · ${vName(p.vendor).slice(0,14)}</td>
+      <td class="num"><span class="cost-cell">${money(p.cost)}</span></td>
+      <td class="num" style="color:var(--gold2)">${money(p.price)}</td>
+      <td class="num">${p.stock<=3?`<span class="tag red">${p.stock}</span>`:p.stock}</td>
+      <td class="num">${money(p.price*p.stock)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+/* ---- SETS ---- */
+function pageSets(){
+  return head('บล็อกเซต &amp; การตั้งราคา', 'จัดกลุ่มสินค้าเป็นเซต · เปลี่ยนราคาแล้วมีผลเฉพาะของที่เหลือในสต๊อก') + `
+  <div class="notice warn" style="margin-bottom:16px">📌 บิลที่ขายไปแล้วจะยังคงเก็บ “ราคา ณ วันที่ขาย” เอาไว้เสมอ ปรับราคาวันนี้จึงไม่กระทบยอดขายและกำไรย้อนหลัง</div>
+  <div class="grid g2">
+    ${SETS.map(s=>{
+      const items = PRODUCTS.filter(p=>p.set===s.id);
+      const q = items.reduce((a,p)=>a+p.stock,0);
+      const val = items.reduce((a,p)=>a+p.price*p.stock,0);
+      return `<div class="card">
+        <div class="card-title"><span class="ic">🎴</span> ${s.name}<span class="sub">${s.game}</span></div>
+        <div class="flex wrap" style="gap:16px;margin-bottom:12px">
+          <div><div class="mini">รายการ</div><div style="font-size:19px">${items.length}</div></div>
+          <div><div class="mini">คงเหลือรวม</div><div style="font-size:19px">${money(q)}</div></div>
+          <div><div class="mini">มูลค่าตามราคาขาย</div><div style="font-size:19px;color:var(--gold2)">฿ ${money(val)}</div></div>
+        </div>
+        <div style="max-height:150px;overflow:auto;margin-bottom:12px">
+          ${items.map(p=>`<div class="flex" style="padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px">
+            <div style="flex:1">${p.ico} ${p.name.slice(0,40)}</div>
+            <div style="color:var(--gold2)">฿${money(p.price)}</div>
+            <div class="mini" style="min-width:44px;text-align:right">×${p.stock}</div></div>`).join('')}
+        </div>
+        <button class="btn block sup-up" onclick="editSetPrice('${s.id}')">✏️ ปรับราคาทั้งเซต</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ---- VENDORS ---- */
+function pageVendors(){
+  return head('ผู้ฝากขาย (Consignment)', 'ของฝากขายหลายเจ้า · แยกยอดและคิดค่าคอมมิชชันรายเจ้าได้',
+    `<button class="btn gold">+ เพิ่มผู้ฝากขาย</button>`) + `
+  <div class="grid g2">
+    ${VENDORS.map(v=>{
+      const items = PRODUCTS.filter(p=>p.vendor===v.id);
+      const q = items.reduce((a,p)=>a+p.stock,0);
+      const val = items.reduce((a,p)=>a+p.price*p.stock,0);
+      const sold = Math.round(val*0.22);
+      const comm = Math.round(sold*v.comm/100);
+      return `<div class="card">
+        <div class="card-title"><span class="ic">🤝</span> <b style="font-weight:500">${v.id}</b> · ${v.name}
+          <span class="sub">คอม ${v.comm}%</span></div>
+        <div class="mini" style="margin-bottom:12px">โทร ${v.tel} · เริ่มฝากขาย ${v.since}</div>
+        <div class="grid g3" style="gap:9px;margin-bottom:12px">
+          <div><div class="mini">รายการ / ชิ้น</div><div style="font-size:17px">${items.length} / ${money(q)}</div></div>
+          <div><div class="mini">มูลค่าคงคลัง</div><div style="font-size:17px;color:var(--gold2)">฿${money(val)}</div></div>
+          <div class="sup-up"><div class="mini">ยอดขายเดือนนี้</div><div style="font-size:17px">฿${money(sold)}</div></div>
+        </div>
+        <div class="bar" style="margin-bottom:6px"><i style="width:${Math.min(100,Math.round(sold/(val||1)*100*3))}%"></i></div>
+        <div class="flex sup-up" style="font-size:12.5px;color:var(--muted)">
+          <span>ค่าคอมมิชชันที่ร้านได้</span><b class="right" style="color:var(--green);font-weight:400">฿ ${money(comm)}</b></div>
+        <div class="flex sup-up" style="font-size:12.5px;color:var(--muted);margin-top:3px">
+          <span>ยอดต้องจ่ายคืนผู้ฝากขาย</span><b class="right" style="font-weight:400">฿ ${money(sold-comm)}</b></div>
+        <div class="flex" style="gap:8px;margin-top:12px">
+          <button class="btn sm" style="flex:1;justify-content:center" onclick="toast('เปิดรายการสินค้าของ ${v.id} (เดโม)')">ดูสินค้า</button>
+          <button class="btn sm sup-up" style="flex:1;justify-content:center" onclick="toast('สร้างใบสรุปรอบจ่าย (เดโม)')">สรุปรอบจ่าย</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ---- EVENT ---- */
+function pageEvent(){
+  return head('สต๊อกออกงานอีเวนต์', 'แยกบัญชีขายหน้าร้าน กับบัญชีที่ยกของไปออกบูธ ใช้งานพร้อมกันได้ 2 บัญชี') + `
+  <div class="grid g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title"><span class="ic">🏪</span> บัญชีหน้าร้าน <span class="sub"><span class="dot"></span> ออนไลน์</span></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="stat" style="border:0;padding:0;background:none"><div class="lbl">ยอดขายวันนี้</div><div class="val g">฿ 32,849</div></div>
+        <div class="stat" style="border:0;padding:0;background:none"><div class="lbl">จำนวนบิล</div><div class="val">14</div></div>
+      </div>
+      <div class="hr"></div>
+      <div class="mini">ผู้ใช้งาน: พนักงาน A, พนักงาน B · อุปกรณ์: โน้ตบุ๊กร้าน + เครื่องยิงบาร์โค้ด</div>
+    </div>
+    <div class="card" style="border-color:var(--gold-line)">
+      <div class="card-title"><span class="ic">🎪</span> บัญชีออกงาน · Bangkok TCG Fest <span class="sub"><span class="dot"></span> ออนไลน์</span></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="stat" style="border:0;padding:0;background:none"><div class="lbl">ยอดขายวันนี้</div><div class="val g">฿ 18,420</div></div>
+        <div class="stat" style="border:0;padding:0;background:none"><div class="lbl">จำนวนบิล</div><div class="val">23</div></div>
+      </div>
+      <div class="hr"></div>
+      <div class="mini">ผู้ใช้งาน: หัวหน้า (iPad) · สแกนด้วยกล้อง iPad · บูธ A12</div>
+    </div>
+  </div>
+  <div class="card tight"><div style="padding:16px 16px 0"><div class="card-title"><span class="ic">📦</span> สินค้าที่ยกไปงาน (รอบวันที่ 20 ส.ค.)</div></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>สินค้า</th><th class="num">ยกไป</th><th class="num">ขายได้</th><th class="num">คงเหลือที่บูธ</th><th class="num">มูลค่าขายแล้ว</th><th>สถานะ</th></tr></thead>
+      <tbody>${[
+        {n:'Pokémon SV8a · Booster Pack',t:60,s:41,ico:'🎴',pr:199},
+        {n:'One Piece OP-09 · Booster Pack',t:40,s:28,ico:'🎴',pr:159},
+        {n:'Sleeve Ultra Pro 66x91',t:20,s:9,ico:'🛡️',pr:189},
+        {n:'Playmat Siatoy TCG (Limited)',t:10,s:6,ico:'🟨',pr:490},
+        {n:'Pokémon SV9 · Booster Box',t:3,s:1,ico:'📦',pr:4990},
+      ].map(r=>`<tr><td>${r.ico} ${r.n}</td><td class="num">${r.t}</td><td class="num" style="color:var(--green)">${r.s}</td>
+        <td class="num">${r.t-r.s}</td><td class="num" style="color:var(--gold2)">${money(r.s*r.pr)}</td>
+        <td>${r.t-r.s===0?'<span class="tag red">หมด</span>':'<span class="tag green">มีของ</span>'}</td></tr>`).join('')}
+      </tbody></table></div></div>
+  <div class="flex wrap" style="margin-top:14px">
+    <button class="btn gold" onclick="go('scan')">📤 สแกนยกของไปงานเพิ่ม</button>
+    <button class="btn" onclick="toast('รับของกลับเข้าคลัง (เดโม)')">📥 รับของกลับเข้าคลัง</button>
+    <button class="btn" onclick="toast('สรุปยอดงานอีเวนต์ (เดโม)')">📊 สรุปยอดงานนี้</button>
+  </div>`;
+}
+
+/* ---- RECON ---- */
+function pageRecon(){
+  const diffs = STATEMENT.filter(s=>s.st!=='ok');
+  return head('กระทบยอดธนาคาร (Reconciliation)', 'นำเข้าไฟล์ Statement แล้วจับคู่กับบิลขายอัตโนมัติ',
+    `<div class="flex wrap"><button class="btn">📁 นำเข้าไฟล์ Statement</button><button class="btn gold" onclick="toast('จับคู่รายการใหม่แล้ว (เดโม)','ok')">🔄 จับคู่อัตโนมัติ</button></div>`) + `
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="stat"><div class="lbl">รายการใน Statement</div><div class="val">${STATEMENT.length}</div><div class="sub">20 ส.ค. 2569</div></div>
+    <div class="stat"><div class="lbl">จับคู่ตรงกัน</div><div class="val green">${STATEMENT.filter(s=>s.st==='ok').length}</div><div class="sub">ยอดตรงพอดี</div></div>
+    <div class="stat"><div class="lbl">ยอดไม่ตรง</div><div class="val red">${STATEMENT.filter(s=>s.st==='diff').length}</div><div class="sub">ต้องตรวจสอบ</div></div>
+    <div class="stat"><div class="lbl">หาบิลคู่ไม่เจอ</div><div class="val" style="color:var(--warn)">${STATEMENT.filter(s=>s.st==='none').length}</div><div class="sub">อาจลืมออกบิล</div></div>
+  </div>
+  <div class="notice red" style="margin-bottom:14px">🚨 พบ <b>${diffs.length} รายการที่ยอดไม่ตรง</b> — ส่วนใหญ่เกิดจากพนักงานลืมกดส่วนลดหน้าร้าน ทำให้ยอดโอนจริงต่ำกว่ายอดในระบบ ระบบคัดกรองเฉพาะรายการเหล่านี้มาให้ตรวจ</div>
+  <div class="card tight"><div class="tbl-wrap"><table>
+    <thead><tr><th>เวลาโอน</th><th class="num">ยอดเงินเข้าจริง</th><th>ธนาคาร/อ้างอิง</th><th>บิลที่จับคู่ได้</th><th class="num">ยอดในระบบ</th><th class="num">ส่วนต่าง</th><th>สถานะ</th><th></th></tr></thead>
+    <tbody>${STATEMENT.map(s=>{
+      const sys = s.st==='none' ? 0 : s.amt - s.diff;
+      return `<tr style="${s.st!=='ok'?'background:rgba(224,69,59,.045)':''}">
+        <td>${s.time}</td><td class="num"><b style="font-weight:400">${money(s.amt)}</b></td>
+        <td class="mini">${s.ref}</td>
+        <td>${s.match==='-'?'<span class="tag red">ไม่พบบิล</span>':s.match}</td>
+        <td class="num">${sys?money(sys):'-'}</td>
+        <td class="num" style="color:${s.diff?'var(--red)':'var(--muted)'}">${s.diff?(s.diff>0?'+':'')+money(s.diff):'0'}</td>
+        <td>${s.st==='ok'?'<span class="tag green">ตรงกัน</span>':s.st==='diff'?'<span class="tag red">ยอดไม่ตรง</span>':'<span class="tag warn">ไม่มีคู่</span>'}</td>
+        <td class="num">${s.st!=='ok'?`<button class="btn sm" onclick="fixRecon('${s.time}')">ตรวจสอบ</button>`:'<span class="mini">📎 สลิป</span>'}</td>
+      </tr>`;}).join('')}</tbody></table></div></div>`;
+}
+function fixRecon(t){
+  const s = STATEMENT.find(x=>x.time===t);
+  openModal(`
+    <div class="modal-head"><h3>ตรวจสอบรายการ ${t}</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="grid g2" style="gap:12px;margin-bottom:14px">
+        <div class="card" style="background:var(--bg2)"><div class="mini">ยอดเงินเข้าจริง (ธนาคาร)</div>
+          <div style="font-size:25px;font-weight:500">฿ ${money(s.amt)}</div><div class="mini">${s.ref}</div></div>
+        <div class="card" style="background:var(--bg2)"><div class="mini">ยอดในระบบ POS</div>
+          <div style="font-size:25px;font-weight:500;color:${s.diff?'var(--red)':'#fff'}">฿ ${money(s.st==='none'?0:s.amt-s.diff)}</div>
+          <div class="mini">${s.match}</div></div>
+      </div>
+      ${s.st==='diff'?`<div class="notice warn">ส่วนต่าง <b>${money(Math.abs(s.diff))} ฿</b> — น่าจะเป็นกรณีลูกค้าต่อราคาหน้าร้านแล้วพนักงานลืมกดส่วนลดในระบบ</div>`
+        :`<div class="notice red">ไม่พบบิลขายที่ตรงกับยอดนี้ อาจเป็นการโอนที่ยังไม่ได้ออกบิล หรือเป็นเงินโอนอื่นที่ไม่ใช่ยอดขาย</div>`}
+      <div class="field" style="margin-top:14px"><label>วิธีแก้ไข</label>
+        <select class="inp">
+          <option>บันทึกเป็นส่วนลดย้อนหลัง (ให้หัวหน้าอนุมัติ)</option>
+          <option>ผูกกับบิลอื่นด้วยตนเอง</option>
+          <option>บันทึกเป็นรายรับอื่น (ไม่ใช่ยอดขาย)</option>
+          <option>ทำเครื่องหมายว่าตรวจแล้ว ไม่ต้องแก้</option>
+        </select></div>
+      <div class="field"><label>แนบสลิป / หลักฐาน</label>
+        <div class="card" style="border-style:dashed;text-align:center;color:var(--muted);cursor:pointer" onclick="toast('เลือกรูปสลิป (เดโม)')">
+          📎 แตะเพื่ออัปโหลดภาพสลิปโอนเงิน</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">ปิด</button>
+      <button class="btn gold" onclick="closeModal();toast('บันทึกการแก้ไขและส่งให้หัวหน้าอนุมัติแล้ว','ok')">บันทึก</button></div>`, true);
+}
+
+/* ---- MEMBERS ---- */
+function pageMembers(){
+  return head('สมาชิก &amp; แต้มสะสม', 'บันทึกลูกค้าด้วยรหัสสมาชิกหรือเบอร์โทรตอนคิดเงิน',
+    `<button class="btn gold">+ เพิ่มสมาชิก</button>`) + `
+  <div class="grid g3" style="margin-bottom:16px">
+    <div class="stat"><div class="lbl">สมาชิกทั้งหมด</div><div class="val">${MEMBERS.length}</div><div class="sub">ในเดโม</div></div>
+    <div class="stat"><div class="lbl">แต้มสะสมคงค้าง</div><div class="val g">${money(MEMBERS.reduce((a,m)=>a+m.point,0))}</div><div class="sub">ยังไม่เปิดให้แลก</div></div>
+    <div class="stat"><div class="lbl">ยอดซื้อรวม</div><div class="val">฿ ${money(MEMBERS.reduce((a,m)=>a+m.spend,0))}</div><div class="sub">ตลอดอายุสมาชิก</div></div>
+  </div>
+  <div class="notice info" style="margin-bottom:14px">💡 ระบบสะสมแต้มเตรียมไว้ในโปรแกรมแล้ว (ค่าเริ่มต้น 100 บาท = 1 แต้ม) เปิด/ปิดได้ที่หน้าตั้งค่า — ช่วงแรกจะยังปิดไว้ก็ได้</div>
+  <div class="card tight"><div class="tbl-wrap"><table>
+    <thead><tr><th>รหัส</th><th>ชื่อ</th><th>เบอร์โทร</th><th>ระดับ</th><th class="num">แต้มสะสม</th><th class="num">ยอดซื้อรวม</th><th></th></tr></thead>
+    <tbody>${MEMBERS.map(m=>`<tr><td>${m.id}</td><td>${m.name}</td><td>${m.tel}</td>
+      <td><span class="tag gold">${m.tier}</span></td><td class="num">${money(m.point)}</td>
+      <td class="num">฿ ${money(m.spend)}</td>
+      <td class="num"><button class="btn sm" onclick="toast('ดูประวัติการซื้อของ ${m.name} (เดโม)')">ประวัติ</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+/* ---- REPORT ---- */
+function pageReport(){
+  const ok = BILLS.filter(b=>b.status==='ปกติ');
+  const total = ok.reduce((a,b)=>a+b.total,0);
+  const byPay = {cash:0,transfer:0,credit:0};
+  ok.forEach(b=>{ if(byPay[b.pay]!==undefined) byPay[b.pay]+=b.total; });
+  const top = [...PRODUCTS].sort((a,b)=>b.price-a.price).slice(0,6);
+  return head('รายงานสรุป', 'ยอดขาย ส่วนลด กำไร และสต๊อกคงเหลือ · 20 ส.ค. 2569',
+    `<div class="seg"><button class="on">วันนี้</button><button>7 วัน</button><button>เดือนนี้</button></div>`) + `
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="stat"><div class="lbl">ยอดขายรวม</div><div class="val g">฿ ${money(total)}</div><div class="sub">${ok.length} บิล</div></div>
+    <div class="stat"><div class="lbl">ส่วนลดที่ให้ไป</div><div class="val red">฿ ${money(ok.reduce((a,b)=>a+b.disc,0))}</div><div class="sub">หักออกจากงบดุลแล้ว</div></div>
+    <div class="stat sup-up"><div class="lbl">กำไรขั้นต้น (ประมาณ)</div><div class="val green">฿ ${money(Math.round(total*0.27))}</div><div class="sub">~27% ของยอดขาย</div></div>
+    <div class="stat"><div class="lbl">บิลเฉลี่ยต่อใบ</div><div class="val">฿ ${money(Math.round(total/(ok.length||1)))}</div><div class="sub">Average basket</div></div>
+  </div>
+  <div class="grid g2" style="align-items:start">
+    <div class="card">
+      <div class="card-title"><span class="ic">💰</span> แยกตามช่องทางการชำระเงิน</div>
+      ${[['cash','💵 เงินสด','var(--green)'],['transfer','📱 เงินโอน','var(--blue)'],['credit','💳 บัตรเครดิต','var(--purple)']].map(([k,n,c])=>`
+        <div style="margin-bottom:12px">
+          <div class="flex" style="font-size:13px;margin-bottom:5px">${n}<b class="right" style="font-weight:400">฿ ${money(byPay[k])}</b></div>
+          <div class="bar"><i style="width:${total?Math.round(byPay[k]/total*100):0}%;background:${c}"></i></div>
+        </div>`).join('')}
+      <div class="hr"></div>
+      <div class="flex" style="font-size:13px;color:var(--muted)">
+        <span>👑 เปิดการ์ด (ผู้บริหาร · ไม่นับเป็นรายได้)</span>
+        <b class="right" style="color:var(--purple);font-weight:400">${BILLS.filter(b=>b.status==='เปิดการ์ด').length} รายการ</b></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="ic">🔥</span> สินค้าที่ต้องจับตา</div>
+      ${top.map(p=>`<div class="flex" style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+        <span style="font-size:17px;margin-right:8px">${p.ico}</span>
+        <div style="flex:1;min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+          <div class="mini">คงเหลือ ${p.stock} · ${vName(p.vendor).slice(0,16)}</div></div>
+        <div style="text-align:right"><div style="color:var(--gold2)">฿${money(p.price)}</div>
+        <div class="mini sup-up">ทุน ${money(p.cost)}</div></div></div>`).join('')}
+    </div>
+  </div>
+  ${S.role!=='owner'?`<div class="notice info" style="margin-top:14px">🔒 ข้อมูลกำไรและต้นทุนบางส่วนแสดงเฉพาะสิทธิ์หัวหน้างานและเจ้าของร้าน</div>`:''}`;
+}
+
+/* ---- NOTIFY ---- */
+function pageNotify(){
+  const ok = BILLS.filter(b=>b.status==='ปกติ');
+  const total = ok.reduce((a,b)=>a+b.total,0);
+  const msg = `🃏 สรุปยอดขาย Siatoy TCG
+📅 20 ส.ค. 2569
+
+💰 ยอดขายรวม  ${money(total)} ฿
+🧾 จำนวนบิล  ${ok.length} บิล
+🏷️ ส่วนลดรวม  ${money(ok.reduce((a,b)=>a+b.disc,0))} ฿
+
+💵 เงินสด  ${money(ok.filter(b=>b.pay==='cash').reduce((a,b)=>a+b.total,0))} ฿
+📱 เงินโอน  ${money(ok.filter(b=>b.pay==='transfer').reduce((a,b)=>a+b.total,0))} ฿
+💳 บัตรเครดิต  ${money(ok.filter(b=>b.pay==='credit').reduce((a,b)=>a+b.total,0))} ฿
+
+🔥 ขายดีวันนี้
+1. Pokémon SV8a Booster Pack ×41
+2. One Piece OP-09 Booster Pack ×28
+3. Sleeve Ultra Pro ×9
+
+📦 สต๊อกคงเหลือ ${money(PRODUCTS.reduce((a,p)=>a+p.stock,0))} ชิ้น
+⚠️ ใกล้หมด ${PRODUCTS.filter(p=>p.stock<=3).length} รายการ
+👑 เปิดการ์ดผู้บริหาร ${BILLS.filter(b=>b.status==='เปิดการ์ด').length} รายการ`;
+  return head('แจ้งเตือนอัตโนมัติ', 'ส่งสรุปยอดเข้า Line หรือ Telegram ทุกวันตอนตี 1') + `
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">🔔</span> ตั้งค่าการแจ้งเตือน</div>
+        <div class="field"><label>ช่องทาง</label>
+          <div class="seg"><button class="on">LINE Notify</button><button>Telegram</button><button>ทั้งสองช่องทาง</button></div></div>
+        <div class="field"><label>เวลาส่งรายงานประจำวัน</label><input class="inp" type="time" value="01:00"></div>
+        <div class="field"><label>Token / Chat ID</label><input class="inp" value="••••••••••••••••••••" type="password"></div>
+        <div class="hr"></div>
+        <div class="flex" style="font-size:13px;margin-bottom:8px">LINE · โควตาฟรี<b class="right" style="font-weight:400">1 / 300 ข้อความ/เดือน</b></div>
+        <div class="bar" style="margin-bottom:12px"><i style="width:8%"></i></div>
+        <div class="flex" style="font-size:13px;margin-bottom:8px">Telegram · โควตาฟรี<b class="right" style="font-weight:400">0 / 100 ข้อความ/เดือน</b></div>
+        <div class="bar"><i style="width:2%"></i></div>
+        <div class="notice info" style="margin-top:14px">ส่งวันละ 1 ข้อความ ใช้โควตาราว 30 ข้อความ/เดือน เหลือเผื่อแจ้งเตือนสินค้าใกล้หมดและบิลยกเลิกได้อีกมาก</div>
+        <button class="btn gold block" style="margin-top:14px" onclick="toast('ส่งข้อความทดสอบแล้ว','ok')">📤 ส่งข้อความทดสอบเดี๋ยวนี้</button>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">💬</span> ตัวอย่างข้อความที่จะได้รับ</div>
+        <div class="chat-head"><div class="chat-ava">L</div> LINE Notify · 01:00 น.</div>
+        <div class="line-preview">${msg}</div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">⚡</span> แจ้งเตือนอื่น ๆ ที่เปิดได้</div>
+        ${[['สินค้าใกล้หมด (ต่ำกว่า 3 ชิ้น)',true],['มีการยกเลิกบิล',true],['ส่วนลดเกิน 500 บาทต่อบิล',true],
+           ['กระทบยอดธนาคารพบรายการไม่ตรง',true],['สรุปยอดงานอีเวนต์เมื่อปิดบูธ',false]].map(([n,on])=>`
+          <div class="flex" style="padding:9px 0;border-bottom:1px solid var(--line);font-size:13px">
+            <span>${n}</span><span class="right tag ${on?'green':''}">${on?'เปิด':'ปิด'}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---- SETTINGS ---- */
+function pageSettings(){
+  return head('ตั้งค่าระบบ', 'ปรับแต่งหน้าตา สิทธิ์ผู้ใช้ และค่าธรรมเนียมต่าง ๆ') + `
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">🎨</span> หน้าตาและแบรนด์</div>
+        <div class="field"><label>ชื่อร้าน</label><input class="inp" value="Siatoy TCG"></div>
+        <div class="field"><label>โลโก้ร้าน</label>
+          <div class="card" style="border-style:dashed;text-align:center;color:var(--muted);cursor:pointer" onclick="toast('อัปโหลดโลโก้ (เดโม) — วางไฟล์ logo.png ไว้ข้างไฟล์นี้ ระบบจะดึงมาแสดงอัตโนมัติ')">
+            🖼️ อัปโหลดโลโก้ (PNG พื้นหลังโปร่ง)</div></div>
+        <div class="field"><label>ธีมสี · โหมดกลางวัน / กลางคืน</label>
+          <div class="flex wrap">
+            <div class="swatch ${S.theme==='light'?'on':''}" title="กลางวัน · ขาว-เขียว"
+              style="background:linear-gradient(135deg,#fff 50%,#22c55e 50%)" onclick="applyTheme('light')"></div>
+            <div class="swatch ${S.theme==='dark'?'on':''}" title="กลางคืน · ดำ-ทอง"
+              style="background:linear-gradient(135deg,#111 50%,#f5b301 50%)" onclick="applyTheme('dark')"></div>
+            <span class="mini" style="align-self:center">${S.theme==='dark'?'กำลังใช้ธีมกลางคืน (ดำ-ทอง)':'กำลังใช้ธีมกลางวัน (ขาว-เขียว)'}</span>
+          </div></div>
+        <div class="field"><label>สลับธีมอัตโนมัติ</label>
+          <select class="inp"><option>ตามการตั้งค่าของเครื่อง (แนะนำ)</option><option>กลางวันตลอด</option><option>กลางคืนตลอด</option><option>ตามเวลา · 18:00–06:00 ใช้ธีมกลางคืน</option></select></div>
+        <div class="field"><label>ฟอนต์</label><select class="inp"><option>Kanit (ค่าเริ่มต้น)</option><option>Prompt</option><option>Sarabun</option></select></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">💳</span> การชำระเงิน</div>
+        <div class="field"><label>ค่าธรรมเนียมบัตรเครดิต (%)</label>
+          <input class="inp" type="number" value="${S.creditFee}" step="0.5"
+            onchange="S.creditFee=Number(this.value)||0;toast('ตั้งค่าธรรมเนียมบัตรเป็น '+S.creditFee+'%')"></div>
+        <div class="field"><label>ปัดเศษยอดสุทธิ</label><select class="inp"><option>ไม่ปัดเศษ</option><option>ปัดเป็นจำนวนเต็มบาท</option></select></div>
+        <div class="field" style="margin:0"><label>บังคับเลือกช่องทางชำระเงินทุกบิล</label>
+          <select class="inp"><option>บังคับ (แนะนำ)</option><option>ไม่บังคับ</option></select></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">👥</span> ผู้ใช้งานและสิทธิ์</div>
+        ${[
+          {r:'พนักงานหน้าร้าน (Admin)',ico:'👤',u:'พนักงาน A, พนักงาน B',can:['ทำบิล / รับเงิน','สแกนรับเข้า-ตัดออก','ดูสต๊อกคงเหลือ'],cant:['ดูราคาต้นทุน','ยกเลิก/แก้ไขบิล','ดูรายงานกำไร']},
+          {r:'หัวหน้างาน (Supervisor)',ico:'🛡️',u:'หัวหน้ากอล์ฟ',can:['ทุกอย่างของพนักงาน','ตรวจสอบการจ่ายบิล','อนุมัติยกเลิก/แก้ไขบิล','ดูต้นทุนและกำไร'],cant:['อนุมัติขั้นสุดท้าย','เปิดการ์ดไม่จ่ายเงิน']},
+          {r:'เจ้าของร้าน (Owner)',ico:'👑',u:'เสี่ยทอย',can:['เห็นยอดขายจริงทั้งหมด','ตรวจสต๊อก/ต้นทุน/กำไร','อนุมัติขั้นสุดท้าย','เปิดการ์ดโดยไม่เสียเงิน'],cant:[]},
+        ].map(x=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+          <div class="flex"><b style="font-weight:500;font-size:13.5px">${x.ico} ${x.r}</b>
+            <span class="right mini">${x.u}</span></div>
+          <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:5px">
+            ${x.can.map(c=>`<span class="tag green">✓ ${c}</span>`).join('')}
+            ${x.cant.map(c=>`<span class="tag red">✕ ${c}</span>`).join('')}
+          </div></div>`).join('')}
+        <button class="btn block" style="margin-top:12px" onclick="toast('เพิ่มผู้ใช้งาน (เดโม)')">+ เพิ่มผู้ใช้งาน</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">🖨️</span> อุปกรณ์</div>
+        ${[['เครื่องยิงบาร์โค้ด (USB)','เชื่อมต่อแล้ว','green'],
+           ['เครื่องพิมพ์สติกเกอร์บาร์โค้ด','เชื่อมต่อแล้ว','green'],
+           ['เครื่องพิมพ์ใบเสร็จ 58mm','ยังไม่ตั้งค่า','red'],
+           ['กล้อง iPad / มือถือ','พร้อมใช้งาน','green']].map(([n,s,k])=>`
+          <div class="flex" style="padding:9px 0;border-bottom:1px solid var(--line);font-size:13px">
+            <span>${n}</span><span class="right tag ${k}">${s}</span></div>`).join('')}
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">🎁</span> ระบบสะสมแต้ม</div>
+        <div class="field"><label>อัตราการสะสม</label><input class="inp" value="ทุก 100 บาท = 1 แต้ม"></div>
+        <div class="field" style="margin:0"><label>สถานะ</label>
+          <select class="inp"><option>ปิดไว้ก่อน (เก็บแต้มไว้ใช้ภายหลัง)</option><option>เปิดใช้งาน</option></select></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   BARCODE LABEL GENERATOR  (CODE128 · pure JS, no library)
+   ========================================================= */
+const C128 = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213",
+"221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212",
+"223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323",
+"131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123",
+"113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113",
+"312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214",
+"112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142",
+"121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341",
+"131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232",
+"2331112"];
+
+function code128svg(data, opt){
+  opt = opt || {};
+  data = String(data || '').trim() || '0000';
+  const codes = [];
+  if(/^\d+$/.test(data) && data.length % 2 === 0 && data.length >= 4){
+    codes.push(105);                                   // Start C (ตัวเลขล้วน = บาร์โค้ดสั้นลง)
+    for(let i=0;i<data.length;i+=2) codes.push(parseInt(data.substr(i,2),10));
+  } else {
+    codes.push(104);                                   // Start B
+    for(const ch of data){ let v = ch.charCodeAt(0)-32; if(v<0||v>94) v=0; codes.push(v); }
+  }
+  let sum = codes[0];
+  for(let i=1;i<codes.length;i++) sum += codes[i]*i;
+  codes.push(sum % 103);
+  codes.push(106);                                     // Stop
+  let x = 0; const rects = [];
+  codes.forEach(c=>{
+    const pat = C128[c];
+    for(let i=0;i<pat.length;i++){
+      const w = +pat[i];
+      if(i%2===0 && w) rects.push('<rect x="'+(x)+'" y="0" width="'+w+'" height="40" fill="#000"/>');
+      x += w;
+    }
+  });
+  const q = 10, W = x + q*2;
+  return '<svg class="bc" viewBox="0 0 '+W+' 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" '+
+    'style="width:100%;height:'+(opt.h||'9mm')+';display:block">'+
+    '<g transform="translate('+q+',0)">'+rects.join('')+'</g></svg>';
+}
+
+/* ---------- label state ---------- */
+S.queue = [];
+S.lblSize = '30x20';
+S.lblMode = 'roll';
+S.lblOpt = {shop:true, name:true, price:true, code:true};
+S.lblPad = true;   // เติม 0 ให้รหัสเลขคี่ → เข้ารหัสแบบ Code C บาร์โค้ดแคบลง ~25%
+const LBL_SIZES = {
+  '30x20':{w:30,h:20,n:'30 × 20 มม. (ของร้าน)'},
+  '32x25':{w:32,h:25,n:'32 × 25 มม.'},
+  '40x30':{w:40,h:30,n:'40 × 30 มม.'},
+  '50x30':{w:50,h:30,n:'50 × 30 มม.'},
+  '60x40':{w:60,h:40,n:'60 × 40 มม.'},
+};
+function nextCode(){
+  let max = 8859000;
+  PRODUCTS.forEach(p=>{ const n = parseInt(p.code,10); if(!isNaN(n) && n>max) max = n; });
+  S.queue.forEach(q=>{ const n = parseInt(q.code,10); if(!isNaN(n) && n>max) max = n; });
+  return String(max+1);
+}
+function lblV(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
+function lblPick(code){
+  if(!code){ ['lblName','lblCode','lblPrice','lblCost','lblQty'].forEach(i=>{const e=document.getElementById(i); if(e) e.value='';}); lblPreview(); return; }
+  const p = P(code);
+  document.getElementById('lblName').value  = p.name;
+  document.getElementById('lblCode').value  = p.code;
+  document.getElementById('lblPrice').value = p.price;
+  document.getElementById('lblCost').value  = p.cost;
+  document.getElementById('lblCat').value   = p.cat;
+  document.getElementById('lblVendor').value= p.vendor;
+  document.getElementById('lblSave').checked = false;
+  lblPreview();
+}
+function lblGen(){ document.getElementById('lblCode').value = nextCode(); lblPreview(); }
+function lblSetSize(v){ S.lblSize = v; lblPreview(); renderQueue(); }
+function lblSetMode(v){ S.lblMode = v; render(); }
+function lblToggle(k, on){ S.lblOpt[k] = on; lblPreview(); }
+
+function bcData(code){
+  code = String(code||'').trim();
+  return (S.lblPad && /^\d+$/.test(code) && code.length % 2 === 1) ? '0'+code : code;
+}
+function bcModules(data){
+  const n = (/^\d+$/.test(data) && data.length%2===0 && data.length>=4)
+    ? (data.length/2 + 2)          // startC + pairs + check
+    : (data.length + 2);           // startB + chars + check
+  return n*11 + 13;                // + stop
+}
+function lblStyle(s){
+  const tiny = s.h <= 22;
+  return {pad: tiny?0.8:1.2, shop: tiny?4.2:5.2, name: tiny?5.4:6.4, nameH: tiny?1.25:2.4,
+          code: tiny?5.0:5.8, price: tiny?8:9.5, bc: (tiny?0.38:0.30)*s.h};
+}
+function bcQuality(size){
+  const s = LBL_SIZES[size], t = lblStyle(s);
+  const data = bcData(lblV('lblCode') || nextCode());
+  const mods = bcModules(data) + 20;                 // + quiet zone
+  const mm = (s.w - t.pad*2) / mods;
+  let k, txt;
+  if(mm >= 0.30){ k='green'; txt='คมชัดมาก'; }
+  else if(mm >= 0.25){ k='green'; txt='ใช้งานได้ดี'; }
+  else if(mm >= 0.20){ k='warn'; txt='ค่อนข้างถี่ — ควรทดสอบยิงก่อน'; }
+  else { k='red'; txt='ถี่เกินไป · ใช้รหัสสั้นลงหรือดวงใหญ่ขึ้น'; }
+  return {mm, mods, k, txt, data};
+}
+function labelHTML(item, size){
+  const s = LBL_SIZES[size], t = lblStyle(s), o = S.lblOpt;
+  const data = bcData(item.code);
+  return '<div class="lbl" style="width:'+s.w+'mm;height:'+s.h+'mm;padding:'+t.pad+'mm">'+
+    (o.shop ? '<div class="l-shop" style="font-size:'+t.shop+'pt">SIATOY TCG</div>' : '') +
+    (o.name ? '<div class="l-nm" style="font-size:'+t.name+'pt;max-height:'+t.nameH+'em">'+ (item.name||'สินค้า') +'</div>' : '') +
+    code128svg(data, {h: t.bc+'mm'}) +
+    (o.code ? '<div class="l-code" style="font-size:'+t.code+'pt">'+data+'</div>' : '') +
+    (o.price && item.price ? '<div class="l-price" style="font-size:'+t.price+'pt">฿ '+money(item.price)+'</div>' : '') +
+  '</div>';
+}
+function lblPreview(){
+  const box = document.getElementById('lblPreview');
+  if(!box) return;
+  box.innerHTML = labelHTML({name:lblV('lblName')||'ชื่อสินค้าตัวอย่าง', code:lblV('lblCode')||nextCode(),
+    price:Number(lblV('lblPrice'))||0}, S.lblSize);
+  const q = bcQuality(S.lblSize), m = document.getElementById('bcQual');
+  if(m) m.innerHTML = '<span class="tag '+q.k+'">แท่งเล็กสุด '+q.mm.toFixed(3)+' มม. · '+q.txt+'</span>'+
+    '<span class="mini" style="margin-left:8px">รหัสที่เข้ารหัสจริง: '+q.data+' · '+q.mods+' โมดูล</span>';
+}
+function lblAdd(){
+  const name = lblV('lblName'), qty = Math.max(1, Math.min(500, Number(lblV('lblQty'))||1));
+  let code = lblV('lblCode');
+  if(!name){ toast('กรุณากรอกชื่อสินค้า', 'err'); return; }
+  if(!code){ code = nextCode(); }
+  const price = Number(lblV('lblPrice'))||0, cost = Number(lblV('lblCost'))||0;
+  const cat = lblV('lblCat')||'อื่น ๆ', vendor = lblV('lblVendor')||'003';
+  const save = document.getElementById('lblSave').checked;
+  if(save && !P(code)){
+    PRODUCTS.push({code, name, cat, set:'ACC', vendor, cost, price, stock:qty, ico:'🏷️'});
+    toast('เพิ่ม <b>'+name.slice(0,24)+'…</b> เข้าคลังแล้ว (สต๊อก '+qty+')', 'ok');
+  }
+  S.queue.push({code, name, price, qty});
+  ['lblName','lblCode','lblPrice','lblCost'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('lblQty').value = qty;
+  document.getElementById('lblProd').value = '';
+  renderQueue(); lblPreview();
+  toast('เพิ่มเข้าคิวพิมพ์ · ลำดับที่ '+S.queue.length+' ('+qty+' ดวง)', 'ok');
+}
+function qMove(i, d){
+  const j = i + d; if(j<0 || j>=S.queue.length) return;
+  const t = S.queue[i]; S.queue[i] = S.queue[j]; S.queue[j] = t; renderQueue();
+}
+function qDel(i){ S.queue.splice(i,1); renderQueue(); }
+function qQty(i, v){ S.queue[i].qty = Math.max(1, Math.min(500, Number(v)||1)); renderQueue(); }
+function qClear(){ S.queue = []; renderQueue(); toast('ล้างคิวพิมพ์แล้ว'); }
+function qTotal(){ return S.queue.reduce((a,c)=>a+c.qty,0); }
+
+function renderQueue(){
+  const box = document.getElementById('lblQueue');
+  if(!box) return;
+  box.innerHTML = S.queue.length ? S.queue.map((q,i)=>`
+    <div class="ci">
+      <div class="q-no">${i+1}</div>
+      <div class="info">
+        <div class="nm">${q.name}</div>
+        <div class="meta">${q.code}${q.price?' · ฿'+money(q.price):''}</div>
+      </div>
+      <div class="flex" style="gap:6px;align-self:center">
+        <input class="inp" style="width:64px;padding:6px 8px;text-align:center" type="number" min="1"
+          value="${q.qty}" onchange="qQty(${i},this.value)" title="จำนวนดวง">
+        <button class="btn sm ghost" onclick="qMove(${i},-1)" ${i===0?'disabled':''} title="เลื่อนขึ้น">↑</button>
+        <button class="btn sm ghost" onclick="qMove(${i},1)" ${i===S.queue.length-1?'disabled':''} title="เลื่อนลง">↓</button>
+        <button class="x" onclick="qDel(${i})">✕</button>
+      </div>
+    </div>`).join('')
+    : `<div class="cart-empty"><span class="big">🏷️</span>ยังไม่มีรายการในคิว<br>กรอกชื่อสินค้าและจำนวนดวง แล้วกด “เพิ่มเข้าคิวพิมพ์”</div>`;
+  const sum = document.getElementById('lblSum');
+  if(sum) sum.innerHTML = `<b>${S.queue.length}</b> รายการ · รวม <b>${qTotal()}</b> ดวง`;
+}
+
+function doPrintLabels(){
+  if(!S.queue.length){ toast('ยังไม่มีรายการในคิวพิมพ์', 'err'); return; }
+  const s = LBL_SIZES[S.lblSize];
+  const area = document.getElementById('printArea');
+  let html = '';
+  S.queue.forEach(q=>{ for(let i=0;i<q.qty;i++) html += labelHTML(q, S.lblSize); });
+  area.innerHTML = '<div class="sheet ' + S.lblMode + '">' + html + '</div>';
+  document.getElementById('pageStyle').textContent = S.lblMode === 'roll'
+    ? '@page{size:'+s.w+'mm '+s.h+'mm;margin:0}'
+    : '@page{size:A4;margin:8mm}';
+  toast('ส่งไปพิมพ์ ' + qTotal() + ' ดวง ตามลำดับในคิว', 'ok');
+  setTimeout(()=>window.print(), 250);
+}
+function previewSheet(){
+  const s = LBL_SIZES[S.lblSize];
+  let html = '';
+  S.queue.forEach(q=>{ for(let i=0;i<Math.min(q.qty,60);i++) html += labelHTML(q, S.lblSize); });
+  openModal(`
+    <div class="modal-head"><h3>ตัวอย่างก่อนพิมพ์ · ${qTotal()} ดวง</h3><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="notice info" style="margin-bottom:14px">เรียงตามลำดับที่กรอกในคิว · ขนาด ${s.n} · ${S.lblMode==='roll'?'เครื่องพิมพ์สติกเกอร์แบบม้วน (1 ดวง/หน้า)':'กระดาษ A4 เรียงเป็นตาราง'}</div>
+      <div class="sheet-preview">${html || '<div class="mini">ไม่มีรายการ</div>'}</div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" onclick="closeModal()">ปิด</button>
+      <button class="btn gold" onclick="closeModal();doPrintLabels()">🖨️ สั่งพิมพ์</button></div>`, true);
+}
+
+/* ---------- PAGE ---------- */
+function pageLabels(){
+  return head('สร้าง &amp; พิมพ์บาร์โค้ด', 'สร้างรหัสบาร์โค้ดให้สินค้า ใส่จำนวนดวงในล็อต แล้วสั่งพิมพ์ตามลำดับที่กรอก') + `
+  <div class="grid g2" style="grid-template-columns:400px 1fr;align-items:start">
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">🏷️</span> ข้อมูลสินค้า</div>
+        <div class="field"><label>เลือกจากสินค้าในคลัง (หรือเว้นไว้เพื่อสร้างใหม่)</label>
+          <select class="inp" id="lblProd" onchange="lblPick(this.value)">
+            <option value="">— สินค้าใหม่ —</option>
+            ${PRODUCTS.map(p=>`<option value="${p.code}">${p.code} · ${p.name}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>ชื่อสินค้า *</label>
+          <input class="inp" id="lblName" placeholder="เช่น Pokémon SV8a · Booster Pack" oninput="lblPreview()"></div>
+        <div class="field"><label>รหัสบาร์โค้ด (เว้นว่างให้ระบบสร้างอัตโนมัติ)</label>
+          <div class="flex" style="gap:8px">
+            <input class="inp" id="lblCode" placeholder="${nextCode()}" oninput="lblPreview()">
+            <button class="btn" onclick="lblGen()" title="สร้างรหัสถัดไปอัตโนมัติ">🎲 สร้าง</button>
+          </div></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:9px">
+          <div class="field" style="margin:0"><label>ราคาขาย</label>
+            <input class="inp" id="lblPrice" type="number" placeholder="0" oninput="lblPreview()"></div>
+          <div class="field sup-up" style="margin:0"><label>ต้นทุน</label>
+            <input class="inp" id="lblCost" type="number" placeholder="0"></div>
+          <div class="field" style="margin:0"><label>จำนวนในล็อต</label>
+            <input class="inp" id="lblQty" type="number" min="1" value="10"></div>
+        </div>
+        <div class="grid g2" style="gap:9px;margin-top:2px">
+          <div class="field" style="margin:0"><label>หมวดสินค้า</label>
+            <select class="inp" id="lblCat">
+              ${['Booster Box','Booster Pack','การ์ดแยกใบ','อุปกรณ์','ETB','Starter','Bundle','อื่น ๆ'].map(c=>`<option>${c}</option>`).join('')}
+            </select></div>
+          <div class="field" style="margin:0"><label>ผู้ฝากขาย</label>
+            <select class="inp" id="lblVendor">${VENDORS.map(v=>`<option value="${v.id}">${v.id} · ${v.name}</option>`).join('')}</select></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="lblSave"> บันทึกเป็นสินค้าใหม่เข้าคลังด้วย (สต๊อก = จำนวนในล็อต)</label>
+        <button class="btn gold block" style="margin-top:12px;padding:12px" onclick="lblAdd()">+ เพิ่มเข้าคิวพิมพ์</button>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">⚙️</span> รูปแบบสติกเกอร์</div>
+        <div class="field"><label>ขนาดดวง</label>
+          <select class="inp" onchange="lblSetSize(this.value)">
+            ${Object.entries(LBL_SIZES).map(([k,v])=>`<option value="${k}" ${S.lblSize===k?'selected':''}>${v.n}</option>`).join('')}
+          </select></div>
+        <div class="field"><label>เครื่องพิมพ์</label>
+          <div class="seg">
+            <button class="${S.lblMode==='roll'?'on':''}" onclick="lblSetMode('roll')">สติกเกอร์ม้วน</button>
+            <button class="${S.lblMode==='a4'?'on':''}" onclick="lblSetMode('a4')">กระดาษ A4</button>
+          </div></div>
+        <div class="field" style="margin:0"><label>แสดงบนดวง</label>
+          <div class="flex wrap" style="gap:14px">
+            ${[['shop','ชื่อร้าน'],['name','ชื่อสินค้า'],['code','ตัวเลขรหัส'],['price','ราคา']].map(([k,n])=>
+              `<label class="chk" style="margin:0"><input type="checkbox" ${S.lblOpt[k]?'checked':''} onchange="lblToggle('${k}',this.checked)"> ${n}</label>`).join('')}
+          </div></div>
+        <label class="chk"><input type="checkbox" ${S.lblPad?'checked':''} onchange="S.lblPad=this.checked;lblPreview()">
+          เติมเลข 0 ข้างหน้าให้เป็นเลขคู่ (บาร์โค้ดแคบลง ~25% · ระบบยิงรับได้ทั้งสองแบบ)</label>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title"><span class="ic">👁️</span> ตัวอย่างดวงสติกเกอร์ <span class="sub">${LBL_SIZES[S.lblSize].n}</span></div>
+        <div class="lbl-stage"><div id="lblPreview" style="transform:scale(2);transform-origin:center center"></div></div>
+        <div style="text-align:center;margin-top:12px" id="bcQual"></div>
+        <div class="mini" style="text-align:center;margin-top:8px">แสดงขยาย 2 เท่าเพื่อให้ดูง่าย · บาร์โค้ดมาตรฐาน CODE128 เครื่องยิงบาร์โค้ดทั่วไปและกล้องมือถืออ่านได้</div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="card-title"><span class="ic">🖨️</span> คิวพิมพ์ (พิมพ์เรียงตามลำดับนี้)
+          <span class="sub" id="lblSum">0 รายการ</span></div>
+        <div id="lblQueue" style="max-height:330px;overflow:auto"></div>
+        <div class="flex wrap" style="margin-top:12px">
+          <button class="btn ghost" onclick="qClear()">ล้างคิว</button>
+          <div class="right flex wrap">
+            <button class="btn" onclick="previewSheet()">👁️ ดูตัวอย่างทั้งชุด</button>
+            <button class="btn gold" onclick="doPrintLabels()">🖨️ สั่งพิมพ์ตามลำดับ</button>
+          </div>
+        </div>
+      </div>
+      <div class="notice info" style="margin-top:14px">💡 ถ้าล็อตนี้รับของมา 3 รายการ ให้กรอกทีละรายการพร้อมจำนวนดวง แล้วจัดลำดับด้วยปุ่ม ↑ ↓ ให้ตรงกับลำดับที่จะแปะหน้ากล่อง — เวลากดพิมพ์ สติกเกอร์จะไหลออกมาเรียงตามนั้นพอดี</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- ROUTER ---------- */
+const PAGES = {pos:pagePOS, bills:pageBills, scan:pageScan, stock:pageStock, sets:pageSets, labels:pageLabels,
+  vendors:pageVendors, event:pageEvent, recon:pageRecon, members:pageMembers,
+  report:pageReport, notify:pageNotify, settings:pageSettings};
+
+function render(){
+  $('#pages').innerHTML = `<div class="page on">${(PAGES[S.page]||pagePOS)()}</div>`;
+  if(S.page === 'pos') renderCart();
+  if(S.page === 'labels'){ renderQueue(); lblPreview(); }
+}
+
+function tick(){
+  const d = new Date();
+  const el = $('#clock');
+  if(el) el.innerHTML = '🕐 <b>' + d.toTimeString().slice(0,5) + '</b>';
+}
+initTheme();
+setInterval(tick, 1000); tick();
+render();
+setTimeout(()=>toast('เดโมพร้อมใช้งาน · ลองยิงบาร์โค้ด <b>8859002</b> หรือแตะสินค้าได้เลย'), 700);
+
+</script>
+</body>
+</html>
