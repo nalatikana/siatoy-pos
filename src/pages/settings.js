@@ -4,7 +4,8 @@
  */
 import { CONFIG, hasBackend } from '../config.js';
 import { esc, money, toast, openModal, closeModal, uuid } from '../lib/util.js';
-import { db, saveSetting, currentLocation, setLocation, deviceId, pendingCount, wipeLocal } from '../lib/store.js';
+import { db, saveSetting, currentLocation, setLocation, deviceId, pendingCount, blockedItems, wipeLocal } from '../lib/store.js';
+import { push } from '../lib/sync.js';
 import { encode128, padEven } from '../lib/code128.js';
 import { S } from '../lib/state.js';
 
@@ -34,6 +35,7 @@ export const settingsPage = {
     const locs = await db.locations.toArray();
     const dev  = await deviceId();
     const pend = await pendingCount();
+    const stuck = await blockedItems();
     const bills = await db.sales.count();
 
     return `
@@ -101,6 +103,20 @@ export const settingsPage = {
             <span>ฐานข้อมูลกลาง</span>
             <b class="right" style="font-weight:400">${hasBackend() ? '<span class="tag green">ต่อแล้ว</span>' : '<span class="tag warn">ยังไม่ได้ต่อ</span>'}</b></div>
         </div>
+
+        ${stuck.length ? `
+        <div class="card" style="margin-top:14px;border-color:var(--warn)">
+          <div class="card-title"><span class="ic">📮</span> ส่งขึ้นเซิร์ฟเวอร์ไม่สำเร็จ
+            <span class="sub">${stuck.length} รายการ</span></div>
+          <div class="notice warn">รายการเหล่านี้ถูกเซิร์ฟเวอร์ปฏิเสธ จึงหยุดลองส่งไว้ก่อน
+            ไม่ให้ไปขวางรายการอื่นในคิว · แก้ต้นเหตุแล้วกดลองใหม่ได้</div>
+          ${stuck.map(e => `<div class="ci"><div class="info">
+            <div class="nm">${esc(e.kind)} · ${new Date(e.at).toLocaleString('th-TH')}</div>
+            <div class="meta" style="color:var(--red)">${esc(e.lastError || '-')}</div></div>
+            <div class="flex" style="gap:6px;align-self:center">
+              <button class="btn sm" data-retry="${e.seq}">ลองใหม่</button>
+              <button class="btn sm danger" data-drop="${e.seq}">ทิ้ง</button></div></div>`).join('')}
+        </div>` : ''}
 
         <div class="card" style="margin-top:14px;border-color:var(--red)">
           <div class="card-title"><span class="ic">⚠️</span> ล้างข้อมูลทดลอง</div>
@@ -178,6 +194,16 @@ export const settingsPage = {
         location.reload();
       };
     };
+
+    el.addEventListener('click', async e => {
+      const r = e.target.closest('[data-retry]');
+      if (r) { await db.outbox.update(Number(r.dataset.retry), { blocked: false, tries: 0 });
+        const res = await push();
+        toast(res.sent ? 'ส่งขึ้นเซิร์ฟเวอร์แล้ว' : 'ยังส่งไม่ได้ · ' + (res.failed || ''), res.sent ? 'ok' : 'err');
+        location.reload(); return; }
+      const d = e.target.closest('[data-drop]');
+      if (d) { await db.outbox.delete(Number(d.dataset.drop)); toast('ทิ้งรายการแล้ว'); location.reload(); }
+    });
 
     el.querySelector('#setWipe').onclick = () => {
       openModal(`

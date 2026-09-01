@@ -52,6 +52,7 @@ export async function setLocation(id) { await metaSet('location_id', id); }
 /* ---------------------------------------------------------------- seed ---- */
 export async function ensureSeeded() {
   if (await metaGet('seeded')) return;
+  if (await metaGet('liveData')) return;      // ใช้ข้อมูลจริงจากเซิร์ฟเวอร์แล้ว ไม่ต้องใส่ตัวอย่าง
   await db.transaction('rw',
     db.locations, db.vendors, db.card_sets, db.products, db.barcodes,
     db.members, db.stock_moves, db.meta, async () => {
@@ -103,13 +104,19 @@ export async function findByCode(text) {
   return (await db.products.toArray()).find(p => p.name.toLowerCase().includes(low)) || null;
 }
 
-/* ---------------------------------------------------------- bill number ---- */
-async function nextBillNo(prefix, locCode) {
+/* ---------------------------------------------------------- เลขที่บิล ----
+ * ต้องสร้างจากเครื่องเองเพื่อให้ขายตอนออฟไลน์ได้ แต่ตัวนับอยู่แยกในแต่ละเครื่อง
+ * ถ้าเลขบิลมีแค่ วันที่ + จุดขาย + ลำดับ สองเครื่องที่ขายอยู่จุดเดียวกัน
+ * จะออกเลขซ้ำกันตั้งแต่บิลแรกของวัน แล้วเซิร์ฟเวอร์จะปฏิเสธใบที่สอง
+ * จึงใส่รหัสย่อของเครื่องคั่นไว้ด้วย   เช่น INV-260901-SHOP-7A3-0001
+ */
+export async function nextBillNo(prefix, locCode) {
   const day = yymmdd();
   const key = 'billseq:' + day;
   const seq = (await metaGet(key, 0)) + 1;
   await metaSet(key, seq);
-  return `${prefix}-${day}-${locCode}-${String(seq).padStart(4, '0')}`;
+  const tag = (await deviceId()).replace(/[^a-z0-9]/gi, '').slice(-3).toUpperCase();
+  return `${prefix}-${day}-${locCode}-${tag}-${String(seq).padStart(4, '0')}`;
 }
 
 /* -------------------------------------------------------------- ขายบิล ---- */
@@ -188,6 +195,7 @@ export async function voidSale(saleId, reason, userName = '') {
 }
 
 export const pendingCount = () => db.outbox.count();
+export const blockedItems = () => db.outbox.filter(e => !!e.blocked).toArray();
 
 /* ------------------------------------------------------------ ตั้งค่า ---- */
 /* เก็บใน meta ของเครื่องนี้ไปก่อน เมื่อต่อฐานข้อมูลแล้วย้ายไปตาราง settings */

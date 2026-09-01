@@ -16,6 +16,9 @@ import { membersPage } from './pages/members.js';
 import { reportPage } from './pages/report.js';
 import { reconPage } from './pages/recon.js';
 import { notifyPage } from './pages/notify.js';
+import { loginPage } from './pages/login.js';
+import { initClient, currentProfile, currentUser, signOut, pull, push,
+         startAutoSync, switchToLiveData } from './lib/sync.js';
 
 const ROUTES = {
   pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
@@ -75,7 +78,10 @@ async function render() {
 async function drawSync() {
   const n = await pendingCount();
   const chip = $('#syncChip');
-  if (!navigator.onLine) {
+  if (hasBackend() && !currentUser()) {
+    chip.innerHTML = '🔒 <b>ยังไม่ได้ล็อกอิน</b>';
+    chip.style.color = 'var(--warn)';
+  } else if (!navigator.onLine) {
     chip.innerHTML = '📴 <b>ออฟไลน์' + (n ? ' · ค้าง ' + n : '') + '</b>';
     chip.style.color = 'var(--warn)';
   } else if (!hasBackend()) {
@@ -109,10 +115,41 @@ async function boot() {
   };
   $('#modalBg').onclick = e => { if (e.target.id === 'modalBg') $('#modalBg').classList.remove('on'); };
 
+  // ผูกกับฐานข้อมูลกลางถ้าตั้งค่าไว้แล้ว
+  if (hasBackend()) {
+    try { await initClient(); } catch (e) { toast('ต่อฐานข้อมูลไม่ได้ · ' + e.message, 'err'); }
+  }
+  const needLogin = hasBackend() && !currentUser();
+
   await ensureSeeded();
   await loadSettings(CONFIG);
+
+  if (hasBackend() && currentUser()) {
+    const p = currentProfile();
+    if (p) {
+      setRole({ staff: 'admin', supervisor: 'sup', owner: 'owner' }[p.role] || 'admin', false);
+      $('#roleSwitch').style.display = 'none';           // สิทธิ์มาจากบัญชีจริงแล้ว
+    }
+    if (await switchToLiveData()) toast('เปลี่ยนมาใช้ข้อมูลจริงจากเซิร์ฟเวอร์แล้ว');
+    const r = await pull();
+    if (!r.ok) toast('ดึงข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ · ' + r.reason, 'err');
+    startAutoSync(res => { toast('ส่งขึ้นเซิร์ฟเวอร์แล้ว ' + res.sent + ' รายการ', 'ok'); drawSync(); });
+  }
   const loc = await currentLocation();
   $('#locChip').innerHTML = '<span class="dot"></span> จุดขาย <b>' + loc.name + '</b>';
+
+  if (needLogin) {
+    $('#sidebar').style.display = 'none';
+    $('#roleSwitch').style.display = 'none';
+    const el = document.createElement('div');
+    el.className = 'page on';
+    el.innerHTML = await loginPage.render();
+    $('#pages').replaceChildren(el);
+    loginPage.mount(el);
+    tick(); setInterval(tick, 1000);
+    await drawSync();
+    return;
+  }
 
   addEventListener('hashchange', render);
   addEventListener('online',  drawSync);
