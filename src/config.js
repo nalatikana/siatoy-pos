@@ -9,6 +9,7 @@ export const CONFIG = {
   shopName:  'Siatoy TCG',
   creditFee: 3,             // % ค่าธรรมเนียมบัตร ย้ายไปตาราง settings เมื่อต่อฐานข้อมูลแล้ว
   pointRate: 100,           // ทุกกี่บาทได้ 1 แต้ม
+  printerDpi: 203,          // ความละเอียดเครื่องพิมพ์สติกเกอร์ ES-9960 (203 หรือ 300)
 };
 
 export const hasBackend = () => Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);

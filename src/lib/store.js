@@ -127,6 +127,7 @@ export async function commitSale({ lines, payment, billDiscount = 0, discountRea
     payment: isOpenCard ? 'none' : payment,
     subtotal, item_discount: itemDiscount, bill_discount: billDiscount,
     discount_reason: discountReason, card_fee: cardFee, vat_amount: 0, total,
+    item_count: lines.reduce((a, l) => a + l.qty, 0),
     member_id: member ? member.id : null,
     created_by_name: userName, device_id: dev,
     client_created_at: now, synced: 0,
@@ -181,3 +182,24 @@ export async function voidSale(saleId, reason, userName = '') {
 }
 
 export const pendingCount = () => db.outbox.count();
+
+/* ------------------------------------------------------------ ตั้งค่า ---- */
+/* เก็บใน meta ของเครื่องนี้ไปก่อน เมื่อต่อฐานข้อมูลแล้วย้ายไปตาราง settings */
+const CFG_KEYS = ['creditFee', 'pointRate', 'printerDpi', 'shopName'];
+
+export async function loadSettings(CONFIG) {
+  for (const k of CFG_KEYS) {
+    const v = await metaGet('cfg:' + k, null);
+    if (v !== null && v !== undefined) CONFIG[k] = v;
+  }
+  return CONFIG;
+}
+export async function saveSetting(CONFIG, key, value) {
+  CONFIG[key] = value;
+  await metaSet('cfg:' + key, value);
+}
+
+/* ล้างข้อมูลทดลองทั้งหมดในเครื่องนี้ ใช้ก่อนเริ่มใช้งานจริง */
+export async function wipeLocal() {
+  await Promise.all(db.tables.map(t => t.clear()));
+}

@@ -537,3 +537,7 @@ html[data-theme="dark"] .prod .pr{color:var(--gold2)}
   .sheet.a4 .lbl{border:0}
 }
 
+
+/* เมนูข้างเปลี่ยนจาก div เป็นลิงก์จริงเพื่อให้กดค้างเปิดแท็บใหม่ได้
+   เบราว์เซอร์เลยขีดเส้นใต้ให้อัตโนมัติ ตรงนี้ปิดทิ้ง */
+a { color: inherit; text-decoration: none; }

@@ -2,16 +2,19 @@
 import { CONFIG, hasBackend } from './config.js';
 import { $, $$, toast } from './lib/util.js';
 import { S } from './lib/state.js';
-import { ensureSeeded, currentLocation, pendingCount } from './lib/store.js';
+import { ensureSeeded, currentLocation, pendingCount, loadSettings } from './lib/store.js';
 import { posPage } from './pages/pos.js';
+import { billsPage } from './pages/bills.js';
+import { labelsPage } from './pages/labels.js';
+import { settingsPage } from './pages/settings.js';
 import { stubPage } from './pages/stub.js';
 
 const ROUTES = {
-  pos: posPage,
-  bills: stubPage('bills'), scan: stubPage('scan'), stock: stubPage('stock'),
-  labels: stubPage('labels'), sets: stubPage('sets'), vendors: stubPage('vendors'),
+  pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
+  scan: stubPage('scan'), stock: stubPage('stock'),
+  sets: stubPage('sets'), vendors: stubPage('vendors'),
   event: stubPage('event'), recon: stubPage('recon'), members: stubPage('members'),
-  report: stubPage('report'), notify: stubPage('notify'), settings: stubPage('settings'),
+  report: stubPage('report'), notify: stubPage('notify'),
 };
 
 /* ---------------------------------------------------------------- ธีม ---- */
@@ -94,6 +97,7 @@ async function boot() {
   $('#modalBg').onclick = e => { if (e.target.id === 'modalBg') $('#modalBg').classList.remove('on'); };
 
   await ensureSeeded();
+  await loadSettings(CONFIG);
   const loc = await currentLocation();
   $('#locChip').innerHTML = '<span class="dot"></span> จุดขาย <b>' + loc.name + '</b>';
 
