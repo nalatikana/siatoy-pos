@@ -6,6 +6,7 @@
 import { money, esc, uuid, toast, redrawPage } from '../lib/util.js';
 import { db, stockMap, findByCode, currentLocation, deviceId } from '../lib/store.js';
 import { S } from '../lib/state.js';
+import { attachWedge, keepFocus, openCameraModal } from '../lib/scanner.js';
 
 const OUT_REASONS = [
   { k: 'transfer', n: 'ยกไปออกบูธ / โอนไปจุดขายอื่น', type: 'transfer_out', needsDest: true },
@@ -129,6 +130,7 @@ export const scanPage = {
           <div class="scan-bar" style="margin-bottom:12px">
             <input class="scan-input" id="scInput" autofocus
               placeholder="🔍 ยิงบาร์โค้ดสินค้าที่จะ${isIn ? 'รับเข้า' : 'ตัดออก'} แล้วกด Enter…">
+            <button class="btn" id="scCam">📷 กล้อง</button>
           </div>
           <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
             ${isIn ? `
@@ -177,6 +179,9 @@ export const scanPage = {
   mount(el) {
     root = el;
     drawList();
+    el.querySelector('#scCam').onclick = () => openCameraModal(addCode);
+    const detach = attachWedge(addCode);
+    keepFocus(el, '#scInput');
     el.querySelector('#scInput').onkeydown = async e => {
       if (e.key !== 'Enter') return;
       const v = e.target.value.trim(); e.target.value = '';
@@ -204,5 +209,7 @@ export const scanPage = {
       const q = e.target.closest('[data-q]');
       if (q) { list[+q.dataset.q].qty = Math.max(1, Number(q.value) || 1); drawList(); }
     });
+
+    return detach;
   },
 };

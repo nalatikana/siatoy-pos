@@ -6,6 +6,7 @@ import { CONFIG } from '../config.js';
 import { $, money, esc, toast, openModal, closeModal } from '../lib/util.js';
 import { db, stockMap, findByCode, commitSale, currentLocation } from '../lib/store.js';
 import { CATEGORIES } from '../lib/seed.js';
+import { attachWedge, keepFocus, openCameraModal, beep } from '../lib/scanner.js';
 import { S } from '../lib/state.js';
 
 let products = [], stock = new Map(), members = [], loc = null;
@@ -35,9 +36,9 @@ async function load() {
 
 /* ------------------------------------------------------------- ตะกร้า ---- */
 function add(product) {
-  if (!product) { toast('ไม่พบสินค้าบาร์โค้ดนี้', 'err'); return; }
+  if (!product) { beep(false); toast('ไม่พบสินค้าบาร์โค้ดนี้', 'err'); return; }
   const have = stockOf(product);
-  if (inCart(product.id) + 1 > have) { toast('สต๊อกไม่พอ · เหลือ ' + have + ' ชิ้น', 'err'); return; }
+  if (inCart(product.id) + 1 > have) { beep(false); toast('สต๊อกไม่พอ · เหลือ ' + have + ' ชิ้น', 'err'); return; }
   const line = cart.find(l => l.product.id === product.id);
   if (line) line.qty++; else cart.push({ product, qty: 1, discount: 0, discount_reason: '' });
   drawCart();
@@ -293,6 +294,8 @@ export const posPage = {
     <div class="page-head">
       <div><h1>ขายสินค้า (POS)</h1>
         <p>ยิงบาร์โค้ดด้วยเครื่องสแกน หรือใช้กล้อง iPad · จุดขาย <b>${esc(loc.name)}</b></p></div>
+      <div class="spacer"></div>
+      <button class="btn" id="posCam">📷 สแกนด้วยกล้อง</button>
     </div>
     <div class="pos-wrap">
       <div>
@@ -322,6 +325,12 @@ export const posPage = {
   mount(el) {
     root = el;
     drawCart();
+
+    const takeCode = async v => { add(await findByCode(v)); };
+    el.querySelector('#posCam').onclick = () => openCameraModal(takeCode);
+    // เครื่องยิง USB ทำงานได้แม้เคอร์เซอร์ไม่ได้อยู่ในช่อง และเคอร์เซอร์เด้งกลับช่องเองหลังกดอย่างอื่น
+    const detach = attachWedge(takeCode);
+    keepFocus(el, '#scanInput');
 
     el.querySelector('#scanInput').onkeydown = async e => {
       if (e.key !== 'Enter') return;
@@ -356,5 +365,7 @@ export const posPage = {
         case 'clear':    cart = []; billDiscount = 0; member = null; drawCart(); break;
       }
     });
+
+    return detach;                 // ถอดตัวดักคีย์ออกเมื่อเปลี่ยนหน้า
   },
 };

@@ -39,16 +39,21 @@ function initTheme() {
 }
 
 /* -------------------------------------------------------------- สิทธิ์ ---- */
-function setRole(r) {
+function setRole(r, rerender = true) {
   S.role = r;
   document.body.className = 'role-' + r;
   $$('.role-switch button').forEach(b => b.classList.toggle('on', b.dataset.role === r));
   try { localStorage.setItem('siatoy-role', r); } catch (e) {}
-  render();
+  if (rerender) render();
 }
 
 /* ------------------------------------------------------------ เส้นทาง ---- */
+let disposePage = null;
+let renderSeq = 0;
+
 async function render() {
+  const seq = ++renderSeq;
+  if (disposePage) { disposePage(); disposePage = null; }
   const key = (location.hash.replace(/^#\/?/, '') || 'pos').split('?')[0];
   S.page = ROUTES[key] ? key : 'pos';
   $$('.nav-item').forEach(n => n.classList.toggle('on', n.dataset.page === S.page));
@@ -58,8 +63,9 @@ async function render() {
   const el = document.createElement('div');
   el.className = 'page on';
   el.innerHTML = await page.render();
+  if (seq !== renderSeq) return;        // มีการเปลี่ยนหน้าซ้อนเข้ามาแล้ว ทิ้งผลรอบนี้
   $('#pages').replaceChildren(el);
-  if (page.mount) page.mount(el);
+  if (page.mount) disposePage = page.mount(el) || null;
   $('#main').scrollTop = 0;
   const first = el.querySelector('input[autofocus]');
   if (first && window.innerWidth > 980) first.focus();
@@ -91,7 +97,7 @@ function tick() {
 /* --------------------------------------------------------------- เริ่ม ---- */
 async function boot() {
   initTheme();
-  try { setRole(localStorage.getItem('siatoy-role') || 'owner'); } catch (e) { setRole('owner'); }
+  try { setRole(localStorage.getItem('siatoy-role') || 'owner', false); } catch (e) { setRole('owner', false); }
 
   $('#themeBtn').onclick = () => {
     applyTheme(S.theme === 'dark' ? 'light' : 'dark');

@@ -541,3 +541,7 @@ html[data-theme="dark"] .prod .pr{color:var(--gold2)}
 /* เมนูข้างเปลี่ยนจาก div เป็นลิงก์จริงเพื่อให้กดค้างเปิดแท็บใหม่ได้
    เบราว์เซอร์เลยขีดเส้นใต้ให้อัตโนมัติ ตรงนี้ปิดทิ้ง */
 a { color: inherit; text-decoration: none; }
+
+/* กล้องสแกนบาร์โค้ด : วิดีโอปูเต็มกรอบ ส่วนกรอบเล็งและเส้นกวาดลอยทับอยู่ด้านบน */
+.scanner-box video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.scanner-box .frame,.scanner-box .scan-line,.scanner-box .hint{z-index:1}
