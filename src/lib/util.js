@@ -32,3 +32,14 @@ export function openModal(html, wide) {
   $('#modalBg').classList.add('on');
 }
 export function closeModal() { $('#modalBg').classList.remove('on'); }
+
+/* วาดหน้าใหม่ทั้งหน้าอย่างปลอดภัย
+ * ถ้าเขียนทับ innerHTML ตอนที่มีช่องกรอกโฟกัสอยู่ เบราว์เซอร์จะโยน error
+ * เพราะ blur ของช่องนั้นไปแก้ DOM ระหว่างที่กำลังถูกแทนที่พอดี */
+export async function redrawPage(el, page) {
+  if (document.activeElement && el.contains(document.activeElement)) document.activeElement.blur();
+  const tmp = document.createElement('div');
+  tmp.innerHTML = await page.render();
+  el.replaceChildren(...tmp.childNodes);
+  if (page.mount) page.mount(el);
+}

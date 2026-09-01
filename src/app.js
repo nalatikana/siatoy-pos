@@ -7,14 +7,21 @@ import { posPage } from './pages/pos.js';
 import { billsPage } from './pages/bills.js';
 import { labelsPage } from './pages/labels.js';
 import { settingsPage } from './pages/settings.js';
-import { stubPage } from './pages/stub.js';
+import { scanPage } from './pages/scan.js';
+import { stockPage } from './pages/stock.js';
+import { setsPage } from './pages/sets.js';
+import { vendorsPage } from './pages/vendors.js';
+import { eventPage } from './pages/event.js';
+import { membersPage } from './pages/members.js';
+import { reportPage } from './pages/report.js';
+import { reconPage } from './pages/recon.js';
+import { notifyPage } from './pages/notify.js';
 
 const ROUTES = {
   pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
-  scan: stubPage('scan'), stock: stubPage('stock'),
-  sets: stubPage('sets'), vendors: stubPage('vendors'),
-  event: stubPage('event'), recon: stubPage('recon'), members: stubPage('members'),
-  report: stubPage('report'), notify: stubPage('notify'),
+  scan: scanPage, stock: stockPage, sets: setsPage, vendors: vendorsPage,
+  event: eventPage, recon: reconPage, members: membersPage,
+  report: reportPage, notify: notifyPage,
 };
 
 /* ---------------------------------------------------------------- ธีม ---- */

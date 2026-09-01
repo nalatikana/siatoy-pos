@@ -122,7 +122,7 @@ async function addToQueue() {
       await db.stock_moves.put({ id: uuid(), product_id: id, location_id: loc.id, qty,
         move_type: 'purchase', ref_id: null, ref_no: 'รับเข้าพร้อมพิมพ์สติกเกอร์',
         created_at: new Date().toISOString() });
-      if (cost) await db.meta.put({ key: 'cost:' + id, value: cost });
+      if (cost) await db.products.update(id, { cost });
       products = await db.products.toArray();
       toast('เพิ่ม <b>' + esc(name.slice(0, 24)) + '</b> เข้าคลังแล้ว (สต๊อก ' + qty + ')', 'ok');
       document.dispatchEvent(new CustomEvent('siatoy:changed'));

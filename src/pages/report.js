@@ -1,0 +1,127 @@
+/* รายงานสรุป
+ * กำไรขั้นต้นคำนวณจากต้นทุนที่บันทึกไว้ในบรรทัดบิล ณ วันขาย ไม่ใช่ต้นทุนปัจจุบัน
+ * ตัวเลขย้อนหลังจึงไม่เปลี่ยนเวลามีการปรับราคาหรือรับของล็อตใหม่ที่ต้นทุนต่างไป
+ */
+import { money, esc, redrawPage } from '../lib/util.js';
+import { db } from '../lib/store.js';
+import { S } from '../lib/state.js';
+
+let range = 'today', data = null;
+
+const startOf = r => {
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (r === '7d') d.setDate(d.getDate() - 6);
+  if (r === 'month') d.setDate(1);
+  return d;
+};
+
+async function load() {
+  const from = startOf(range).toISOString();
+  const sales = (await db.sales.toArray()).filter(s => s.client_created_at >= from);
+  const ok = sales.filter(s => s.status === 'normal');
+  const okIds = new Set(ok.map(s => s.id));
+  const products = await db.products.toArray();
+
+  const byPay = { cash: 0, transfer: 0, credit: 0 };
+  ok.forEach(s => { if (byPay[s.payment] !== undefined) byPay[s.payment] += s.total; });
+
+  let cost = 0, revenue = 0;
+  const top = new Map();
+  await db.sale_items.each(it => {
+    if (!okIds.has(it.sale_id)) return;
+    cost    += (it.unit_cost || 0) * it.qty;
+    revenue += it.line_total;
+    const t = top.get(it.product_id) || { qty: 0, amount: 0, name: it.product_name };
+    t.qty += it.qty; t.amount += it.line_total;
+    top.set(it.product_id, t);
+  });
+
+  data = {
+    sales: ok, all: sales, byPay, cost, revenue,
+    total: ok.reduce((a, s) => a + s.total, 0),
+    discount: ok.reduce((a, s) => a + s.item_discount + s.bill_discount, 0),
+    fee: ok.reduce((a, s) => a + s.card_fee, 0),
+    voids: sales.filter(s => s.status === 'void').length,
+    opens: sales.filter(s => s.status === 'open_card').length,
+    top: [...top.values()].sort((a, b) => b.qty - a.qty).slice(0, 8),
+    lowStock: products.length,
+  };
+}
+
+export const reportPage = {
+  async render() {
+    await load();
+    const d = data;
+    const gross = d.revenue - d.cost;
+    const label = { today: 'วันนี้', '7d': '7 วันล่าสุด', month: 'เดือนนี้' }[range];
+    const bar = (v, max, color) => `<div class="bar"><i style="width:${max ? Math.round(v / max * 100) : 0}%;background:${color}"></i></div>`;
+
+    return `
+    <div class="page-head">
+      <div><h1>รายงานสรุป</h1><p>${label} · ${d.sales.length} บิล</p></div>
+      <div class="spacer"></div>
+      <div class="seg">${[['today','วันนี้'],['7d','7 วัน'],['month','เดือนนี้']].map(([k,n]) =>
+        `<button class="${range === k ? 'on' : ''}" data-r="${k}">${n}</button>`).join('')}</div>
+    </div>
+
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="stat"><div class="lbl">ยอดขายรวม</div><div class="val g">฿ ${money(d.total)}</div>
+        <div class="sub">${d.sales.length} บิล</div></div>
+      <div class="stat"><div class="lbl">ส่วนลดที่ให้ไป</div><div class="val red">฿ ${money(d.discount)}</div>
+        <div class="sub">หักออกจากยอดขายแล้ว</div></div>
+      <div class="stat sup-up"><div class="lbl">กำไรขั้นต้น</div>
+        <div class="val green">฿ ${money(gross)}</div>
+        <div class="sub">${d.revenue ? Math.round(gross / d.revenue * 100) : 0}% ของยอดขายก่อนลดท้ายบิล</div></div>
+      <div class="stat"><div class="lbl">บิลเฉลี่ยต่อใบ</div>
+        <div class="val">฿ ${money(d.sales.length ? Math.round(d.total / d.sales.length) : 0)}</div>
+        <div class="sub">${d.voids} บิลถูกยกเลิก</div></div>
+    </div>
+
+    <div class="grid g2" style="align-items:start">
+      <div class="card">
+        <div class="card-title"><span class="ic">💰</span> แยกตามช่องทางการชำระเงิน</div>
+        ${[['cash','💵 เงินสด','var(--green)'],['transfer','📱 เงินโอน','var(--blue)'],
+           ['credit','💳 บัตรเครดิต','var(--purple)']].map(([k, n, c]) => `
+          <div style="margin-bottom:12px">
+            <div class="flex" style="font-size:13px;margin-bottom:5px">${n}
+              <b class="right" style="font-weight:400">฿ ${money(d.byPay[k])}</b></div>
+            ${bar(d.byPay[k], d.total, c)}
+          </div>`).join('')}
+        ${d.fee ? `<div class="flex" style="font-size:12.5px;color:var(--muted)">
+          <span>ค่าธรรมเนียมบัตรที่บวกให้ลูกค้า</span>
+          <b class="right" style="font-weight:400">฿ ${money(d.fee)}</b></div>` : ''}
+        <div class="hr"></div>
+        <div class="flex" style="font-size:13px;color:var(--muted)">
+          <span>👑 เปิดการ์ด (ไม่นับเป็นรายได้)</span>
+          <b class="right" style="color:var(--purple);font-weight:400">${d.opens} รายการ</b></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="ic">🔥</span> ขายดีในช่วงนี้</div>
+        ${d.top.length ? d.top.map((t, i) => `
+          <div class="flex" style="padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+            <span style="width:22px;color:var(--muted)">${i + 1}</span>
+            <div style="flex:1;min-width:0">
+              <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.name)}</div>
+              ${bar(t.qty, d.top[0].qty, 'var(--gold2)')}
+            </div>
+            <div style="text-align:right;min-width:92px">
+              <div>${t.qty} ชิ้น</div>
+              <div class="mini">฿ ${money(t.amount)}</div></div>
+          </div>`).join('')
+          : '<div class="cart-empty"><span class="big">📊</span>ยังไม่มีการขายในช่วงนี้</div>'}
+      </div>
+    </div>
+
+    ${S.role === 'admin' ? `<div class="notice info" style="margin-top:14px">🔒
+      ข้อมูลกำไรและต้นทุนแสดงเฉพาะสิทธิ์หัวหน้างานขึ้นไป</div>` : ''}
+    <div class="notice warn" style="margin-top:14px">📌 กำไรขั้นต้นคำนวณจากต้นทุนที่บันทึกไว้ในบิล ณ วันขาย
+      การปรับราคาหรือรับของล็อตใหม่ที่ต้นทุนต่างไป จึงไม่ทำให้ตัวเลขย้อนหลังเปลี่ยน</div>`;
+  },
+  mount(el) {
+    el.addEventListener('click', async e => {
+      const r = e.target.closest('[data-r]');
+      if (r) { range = r.dataset.r; await redrawPage(el, reportPage); }
+    });
+  },
+};

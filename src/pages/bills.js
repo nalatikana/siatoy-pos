@@ -2,7 +2,7 @@
  * ยกเลิกแล้วของกลับเข้าคลังจริง เพราะลงเป็นบรรทัดคืนของในสมุดเดินของ
  * ไม่ได้แค่เปลี่ยนสถานะบนหน้าจอเหมือนเดโม
  */
-import { money, esc, toast, openModal, closeModal } from '../lib/util.js';
+import { money, esc, toast, openModal, closeModal, redrawPage } from '../lib/util.js';
 import { db, voidSale } from '../lib/store.js';
 import { S } from '../lib/state.js';
 
@@ -166,7 +166,7 @@ export const billsPage = {
     root = el;
     el.addEventListener('click', async e => {
       const r = e.target.closest('[data-range]');
-      if (r) { range = r.dataset.range; const n = await this.render(); el.innerHTML = n; return; }
+      if (r) { range = r.dataset.range; await redrawPage(el, billsPage); return; }
       const o = e.target.closest('[data-open]');
       if (o) { e.preventDefault(); showItems(o.dataset.open); return; }
       const v = e.target.closest('[data-void]');

@@ -25,6 +25,12 @@ db.version(1).stores({
   meta:        'key',
 });
 
+/* เพิ่มตารางกระทบยอดธนาคารในเวอร์ชัน 2 ตารางเดิมยกมาทั้งหมดโดยอัตโนมัติ */
+db.version(2).stores({
+  bank_lines: 'id, txn_time, amount',
+  recon:      'id, bank_line_id, sale_id',
+});
+
 /* ---------------------------------------------------------------- meta ---- */
 export async function metaGet(key, dflt = null) {
   const r = await db.meta.get(key);
