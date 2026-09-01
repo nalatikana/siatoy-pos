@@ -14,3 +14,6 @@ src/config.local.js
 service_role*
 statement*.csv
 **/ลูกค้า*.csv
+
+# ไดรเวอร์เครื่องพิมพ์ ไม่ต้องขึ้น repo (ไฟล์ใหญ่และ repo เป็น public)
+*.exe
