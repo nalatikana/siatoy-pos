@@ -7,3 +7,10 @@ node_modules/
 dist/
 reference/*.m4a
 .gittrash/
+
+# ห้ามขึ้น repo เด็ดขาด (repo เป็น public)
+src/config.local.js
+*.key
+service_role*
+statement*.csv
+**/ลูกค้า*.csv

@@ -1,0 +1,47 @@
+/* Service worker : ทำให้แอปเปิดได้ตอนไม่มีเน็ต
+ * เก็บไฟล์แอปไว้ในเครื่องแบบ cache-first  ส่วนข้อมูลขายอยู่ใน IndexedDB ไม่เกี่ยวกับที่นี่
+ * ขึ้นเวอร์ชันทุกครั้งที่แก้ไฟล์ในรายการ ไม่งั้นเครื่องที่เคยเปิดแล้วจะยังใช้ของเก่า
+ */
+const VERSION = 'siatoy-v1';
+const SHELL = [
+  './', './index.html', './manifest.webmanifest',
+  './src/styles.css', './src/app.js', './src/config.js',
+  './src/lib/util.js', './src/lib/store.js', './src/lib/seed.js',
+  './src/pages/pos.js', './src/pages/stub.js',
+  './public/vendor/dexie.js', './public/vendor/supabase.js',
+  './public/logo.jpg', './public/fonts.css',
+  './public/fonts/kanit-thai-300-normal.woff2',
+  './public/fonts/kanit-latin-300-normal.woff2',
+  './public/fonts/kanit-thai-400-normal.woff2',
+  './public/fonts/kanit-latin-400-normal.woff2',
+  './public/fonts/kanit-thai-500-normal.woff2',
+  './public/fonts/kanit-latin-500-normal.woff2',
+  './public/fonts/kanit-thai-600-normal.woff2',
+  './public/fonts/kanit-latin-600-normal.woff2',
+  './public/fonts/kanit-thai-700-normal.woff2',
+  './public/fonts/kanit-latin-700-normal.woff2',
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys()
+    .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
+
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== location.origin) return;          // เรียกไปฐานข้อมูล ปล่อยผ่านตามปกติ
+  e.respondWith(
+    caches.match(req).then(hit => hit || fetch(req).then(res => {
+      const copy = res.clone();
+      caches.open(VERSION).then(c => c.put(req, copy)).catch(() => {});
+      return res;
+    }).catch(() => caches.match('./index.html')))
+  );
+});

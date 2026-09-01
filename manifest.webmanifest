@@ -1,0 +1,11 @@
+{
+  "name": "Siatoy TCG · ระบบขายหน้าร้าน",
+  "short_name": "Siatoy POS",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [{ "src": "public/logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }]
+}

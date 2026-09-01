@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#111111">
+<title>Siatoy TCG · ระบบขายหน้าร้าน</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="public/logo.jpg">
+<link rel="icon" href="public/logo.jpg">
+<link rel="stylesheet" href="public/fonts.css">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body class="role-owner">
+
+<div id="app">
+  <div class="topbar">
+    <button class="btn sm hamb" id="hambBtn">☰</button>
+    <div class="brand">
+      <div class="brand-logo" id="brandLogo">
+        <img src="public/logo.jpg" alt="Siatoy TCG" onload="this.parentNode.classList.add('has-img')">
+        <span class="logo-fallback" style="font-size:19px">🃏</span>
+      </div>
+      <div class="brand-name">
+        <b class="gold-text">Siatoy TCG</b>
+        <span>TRADING CARD GAME</span>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="top-chip" id="locChip"><span class="dot"></span> สาขา <b>—</b></div>
+    <div class="top-chip" id="syncChip" title="สถานะการส่งบิลขึ้นเซิร์ฟเวอร์">⏳ <b>—</b></div>
+    <div class="top-chip" id="clock">--:--</div>
+    <button class="btn sm theme-btn" id="themeBtn" title="สลับโหมดกลางวัน / กลางคืน">🌙</button>
+    <div class="role-switch" id="roleSwitch">
+      <button data-role="admin">👤 พนักงาน</button>
+      <button data-role="sup">🛡️ หัวหน้า</button>
+      <button data-role="owner" class="on">👑 เจ้าของ</button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+    <div class="sidebar" id="sidebar">
+      <div class="nav-group">ขายหน้าร้าน</div>
+      <a class="nav-item" href="#/pos"     data-page="pos"><span class="nav-ico">🛒</span> ขายสินค้า (POS)</a>
+      <a class="nav-item" href="#/bills"   data-page="bills"><span class="nav-ico">🧾</span> บิลขาย / ยกเลิก</a>
+
+      <div class="nav-group">คลังสินค้า</div>
+      <a class="nav-item" href="#/scan"    data-page="scan"><span class="nav-ico">📥</span> รับเข้า / ตัดออก</a>
+      <a class="nav-item" href="#/stock"   data-page="stock"><span class="nav-ico">📦</span> สินค้า &amp; สต๊อก</a>
+      <a class="nav-item" href="#/labels"  data-page="labels"><span class="nav-ico">🏷️</span> สร้าง &amp; พิมพ์บาร์โค้ด</a>
+      <a class="nav-item" href="#/sets"    data-page="sets"><span class="nav-ico">🎴</span> บล็อกเซต &amp; ราคา</a>
+      <a class="nav-item" href="#/vendors" data-page="vendors"><span class="nav-ico">🤝</span> ผู้ฝากขาย</a>
+      <a class="nav-item" href="#/event"   data-page="event"><span class="nav-ico">🎪</span> สต๊อกออกงาน</a>
+
+      <div class="nav-group">การเงิน</div>
+      <a class="nav-item" href="#/recon"   data-page="recon"><span class="nav-ico">🏦</span> กระทบยอดธนาคาร</a>
+      <a class="nav-item" href="#/members" data-page="members"><span class="nav-ico">💳</span> สมาชิก &amp; แต้ม</a>
+
+      <div class="nav-group">หลังบ้าน</div>
+      <a class="nav-item" href="#/report"   data-page="report"><span class="nav-ico">📊</span> รายงานสรุป</a>
+      <a class="nav-item" href="#/notify"   data-page="notify"><span class="nav-ico">🔔</span> แจ้งเตือน</a>
+      <a class="nav-item" href="#/settings" data-page="settings"><span class="nav-ico">⚙️</span> ตั้งค่าระบบ</a>
+    </div>
+
+    <div class="main" id="main"><div id="pages"></div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBox"></div></div>
+<div id="toasts"></div>
+<style id="pageStyle"></style>
+<div id="printArea"></div>
+
+<script src="public/vendor/dexie.js"></script>
+<script src="public/vendor/supabase.js"></script>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
