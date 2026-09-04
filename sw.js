@@ -2,7 +2,7 @@
  * เก็บไฟล์แอปไว้ในเครื่องแบบ cache-first  ส่วนข้อมูลขายอยู่ใน IndexedDB ไม่เกี่ยวกับที่นี่
  * ขึ้นเวอร์ชันทุกครั้งที่แก้ไฟล์ในรายการ ไม่งั้นเครื่องที่เคยเปิดแล้วจะยังใช้ของเก่า
  */
-const VERSION = 'siatoy-v8';
+const VERSION = 'siatoy-v9';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './src/styles.css', './src/app.js', './src/config.js',
@@ -10,6 +10,7 @@ const SHELL = [
   './src/lib/state.js', './src/lib/code128.js', './src/lib/scanner.js',
   './src/lib/sync.js', './src/pages/login.js', './src/pages/import.js',
   './src/pages/users.js', './src/pages/help.js', './src/lib/flexview.js',
+  './src/lib/lock.js',
   './supabase/functions/_shared/flex.js',
   './public/vendor/zxing.js',
   './src/pages/pos.js', './src/pages/bills.js',

@@ -20,8 +20,9 @@ import { loginPage } from './pages/login.js';
 import { importPage } from './pages/import.js';
 import { usersPage } from './pages/users.js';
 import { openHelp, maybeShowFirstTime } from './pages/help.js';
+import { lockNow, startAutoLock, hasPin } from './lib/lock.js';
 import { initClient, currentProfile, currentUser, signOut, pull, push,
-         startAutoSync, switchToLiveData } from './lib/sync.js';
+         startAutoSync, switchToLiveData, logEvent } from './lib/sync.js';
 
 const ROUTES = {
   pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
@@ -114,6 +115,11 @@ async function boot() {
   };
   $('#hambBtn').onclick = () => $('#sidebar').classList.toggle('open');
   $('#helpBtn').onclick = () => openHelp();
+  $('#lockBtn').onclick = async () => {
+    if (await hasPin()) return lockNow('กดล็อกเอง');
+    toast('ยังไม่ได้ตั้ง PIN · ตั้งได้ที่หน้าตั้งค่าระบบ', 'err');
+    location.hash = '#/settings';
+  };
   $('#roleSwitch').onclick = e => {
     const b = e.target.closest('[data-role]'); if (b) setRole(b.dataset.role);
   };
@@ -134,6 +140,7 @@ async function boot() {
       setRole({ staff: 'admin', supervisor: 'sup', owner: 'owner' }[p.role] || 'admin', false);
       $('#roleSwitch').style.display = 'none';           // สิทธิ์มาจากบัญชีจริงแล้ว
     }
+    await logEvent('login');
     if (await switchToLiveData()) toast('เปลี่ยนมาใช้ข้อมูลจริงจากเซิร์ฟเวอร์แล้ว');
     const r = await pull();
     if (!r.ok) toast('ดึงข้อมูลจากเซิร์ฟเวอร์ไม่สำเร็จ · ' + r.reason, 'err');
@@ -164,6 +171,7 @@ async function boot() {
 
   await render();
   await drawSync();
+  await startAutoLock();
   await maybeShowFirstTime();
 
   if (!hasBackend()) {

@@ -5,7 +5,8 @@
 import { CONFIG, hasBackend } from '../config.js';
 import { esc, money, toast, openModal, closeModal, uuid } from '../lib/util.js';
 import { db, saveSetting, currentLocation, setLocation, deviceId, pendingCount, blockedItems, wipeLocal } from '../lib/store.js';
-import { push } from '../lib/sync.js';
+import { push, mfaFactors, mfaEnroll, mfaConfirm, mfaRemove, currentUser, currentProfile } from '../lib/sync.js';
+import { hasPin, setPin, clearPin, setLockMinutes, lockMinutes, lockNow } from '../lib/lock.js';
 import { encode128, padEven } from '../lib/code128.js';
 import { S } from '../lib/state.js';
 
@@ -36,6 +37,10 @@ export const settingsPage = {
     const dev  = await deviceId();
     const pend = await pendingCount();
     const stuck = await blockedItems();
+    const pinOn = await hasPin();
+    const me = currentProfile();
+    const canMfa = hasBackend() && currentUser() && me && me.role === 'owner';
+    const factors = canMfa ? await mfaFactors() : [];
     const bills = await db.sales.count();
 
     return `
@@ -88,6 +93,46 @@ export const settingsPage = {
               ${x.can.map(c => `<span class="tag green">✓ ${c}</span>`).join('')}
               ${x.cant.map(c => `<span class="tag red">✕ ${c}</span>`).join('')}
             </div></div>`).join('')}
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <div class="card-title"><span class="ic">🔐</span> ความปลอดภัย</div>
+
+          <div class="flex" style="padding:8px 0;font-size:13.5px">
+            <span>PIN ล็อกหน้าจอ</span>
+            <span class="right">${pinOn ? '<span class="tag green">ตั้งไว้แล้ว</span>'
+                                       : '<span class="tag warn">ยังไม่ได้ตั้ง</span>'}</span></div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 10px">
+            ใช้ตอนเดินออกจากเครื่องชั่วคราว กดล็อกที่ปุ่มรูปกุญแจมุมขวาบน
+            แล้วปลดล็อกด้วย PIN 6 หลัก ไม่ต้องพิมพ์รหัสผ่านยาว ๆ ต่อหน้าลูกค้า
+            และไม่ต้องล็อกอินใหม่ · <b>PIN ของแต่ละคนแยกกัน</b> คนอื่นเปิดดูไม่ได้แม้แต่เจ้าของร้าน</p>
+          <div class="flex wrap" style="gap:8px">
+            <button class="btn" id="secPin">${pinOn ? 'เปลี่ยน PIN' : 'ตั้ง PIN'}</button>
+            ${pinOn ? '<button class="btn ghost" id="secPinDel">ลบ PIN</button>' : ''}
+            ${pinOn ? '<button class="btn" id="secLockNow">🔒 ล็อกเดี๋ยวนี้</button>' : ''}
+          </div>
+
+          <div class="field" style="margin-top:14px"><label>ล็อกอัตโนมัติเมื่อไม่ได้แตะเครื่อง</label>
+            <select class="inp" id="secMin" ${pinOn ? '' : 'disabled'}>
+              ${[[0,'ไม่ล็อกอัตโนมัติ'],[1,'1 นาที'],[3,'3 นาที'],[5,'5 นาที'],
+                 [10,'10 นาที'],[30,'30 นาที']].map(([v,n]) =>
+                `<option value="${v}" ${lockMinutes() === v ? 'selected' : ''}>${n}</option>`).join('')}
+            </select></div>
+          ${pinOn ? '' : '<div class="mini">ตั้ง PIN ก่อนถึงจะเปิดล็อกอัตโนมัติได้</div>'}
+
+          ${canMfa ? `
+          <div class="hr"></div>
+          <div class="flex" style="padding:8px 0;font-size:13.5px">
+            <span>ยืนยันตัวตนสองชั้น</span>
+            <span class="right">${factors.length ? '<span class="tag green">เปิดอยู่</span>'
+                                                  : '<span class="tag warn">ยังไม่เปิด</span>'}</span></div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 10px">
+            บัญชีเจ้าของร้านเห็นทุกอย่างและสร้างบัญชีคนอื่นได้ ควรมีชั้นที่สอง
+            เวลาล็อกอินจะถามรหัส 6 หลักจากแอปยืนยันตัวตนในมือถือเพิ่มอีกครั้ง</p>
+          ${factors.length
+            ? '<button class="btn danger" id="secMfaOff">ปิดยืนยันสองชั้น</button>'
+            : '<button class="btn gold" id="secMfaOn">เปิดยืนยันสองชั้น</button>'}
+          ` : ''}
         </div>
 
         <div class="card" style="margin-top:14px">
@@ -204,6 +249,96 @@ export const settingsPage = {
       const d = e.target.closest('[data-drop]');
       if (d) { await db.outbox.delete(Number(d.dataset.drop)); toast('ทิ้งรายการแล้ว'); location.reload(); }
     });
+
+    /* ---------------- PIN และการล็อกหน้าจอ ---------------- */
+    const askPin = () => {
+      openModal(`
+        <div class="modal-head"><h3>ตั้ง PIN ล็อกหน้าจอ</h3><button class="x" id="mClose">✕</button></div>
+        <div class="modal-body">
+          <div class="field"><label>PIN ใหม่ (ตัวเลข 6 หลัก)</label>
+            <input class="inp" id="pin1" inputmode="numeric" maxlength="6" type="password"
+              style="text-align:center;font-size:24px;letter-spacing:10px" autofocus></div>
+          <div class="field"><label>ใส่ซ้ำอีกครั้ง</label>
+            <input class="inp" id="pin2" inputmode="numeric" maxlength="6" type="password"
+              style="text-align:center;font-size:24px;letter-spacing:10px"></div>
+          <div id="pinErr"></div>
+          <div class="notice info">อย่าใช้เลขเดาง่ายอย่าง 123456 หรือวันเกิด
+            ถ้าลืม PIN ให้กดออกจากระบบที่หน้าล็อก แล้วเข้าใหม่ด้วยรหัสผ่าน</div>
+        </div>
+        <div class="modal-foot"><button class="btn ghost" id="mNo">ยกเลิก</button>
+          <button class="btn gold" id="mOk">บันทึก PIN</button></div>`);
+      const box = document.getElementById('modalBox');
+      box.querySelector('#mClose').onclick = box.querySelector('#mNo').onclick = closeModal;
+      box.querySelector('#mOk').onclick = async () => {
+        const a = box.querySelector('#pin1').value.trim(), b = box.querySelector('#pin2').value.trim();
+        const err = box.querySelector('#pinErr');
+        if (!/^\d{6}$/.test(a)) { err.innerHTML = '<div class="notice red">ต้องเป็นตัวเลข 6 หลัก</div>'; return; }
+        if (a !== b) { err.innerHTML = '<div class="notice red">ใส่ไม่ตรงกัน</div>'; return; }
+        if (/^(\d)\1{5}$/.test(a) || a === '123456' || a === '000000') {
+          err.innerHTML = '<div class="notice red">PIN นี้เดาง่ายเกินไป ใช้เลขอื่น</div>'; return; }
+        try { await setPin(a); closeModal(); toast('ตั้ง PIN แล้ว', 'ok'); location.reload(); }
+        catch (e) { err.innerHTML = '<div class="notice red">' + esc(e.message) + '</div>'; }
+      };
+    };
+    const secPin = el.querySelector('#secPin');
+    if (secPin) secPin.onclick = askPin;
+    const secPinDel = el.querySelector('#secPinDel');
+    if (secPinDel) secPinDel.onclick = async () => {
+      await clearPin(); await setLockMinutes(0);
+      toast('ลบ PIN แล้ว · ล็อกอัตโนมัติถูกปิดไปด้วย'); location.reload();
+    };
+    const secLockNow = el.querySelector('#secLockNow');
+    if (secLockNow) secLockNow.onclick = () => lockNow('กดล็อกเอง');
+    const secMin = el.querySelector('#secMin');
+    if (secMin) secMin.onchange = async () => {
+      await setLockMinutes(Number(secMin.value));
+      toast(Number(secMin.value) ? 'ล็อกอัตโนมัติหลังไม่ได้แตะ ' + secMin.value + ' นาที'
+                                 : 'ปิดล็อกอัตโนมัติแล้ว', 'ok');
+    };
+
+    /* ---------------- ยืนยันตัวตนสองชั้น ---------------- */
+    const mfaOn = el.querySelector('#secMfaOn');
+    if (mfaOn) mfaOn.onclick = async () => {
+      try {
+        const f = await mfaEnroll();
+        openModal(`
+          <div class="modal-head"><h3>เปิดยืนยันตัวตนสองชั้น</h3><button class="x" id="mClose">✕</button></div>
+          <div class="modal-body">
+            <div class="notice info">ใช้แอปยืนยันตัวตนในมือถือ เช่น Google Authenticator
+              หรือ Microsoft Authenticator สแกนรูปด้านล่าง</div>
+            <div style="text-align:center;margin:16px 0;background:#fff;padding:14px;border-radius:10px">
+              <img src="${f.totp.qr_code}" alt="QR" style="width:190px;height:190px"></div>
+            <div class="field"><label>ถ้าสแกนไม่ได้ ให้พิมพ์รหัสนี้ในแอปแทน</label>
+              <input class="inp" value="${esc(f.totp.secret)}" readonly
+                style="font-family:monospace;font-size:13px"></div>
+            <div class="field"><label>ใส่รหัส 6 หลักที่แอปแสดงอยู่เพื่อยืนยัน</label>
+              <input class="inp" id="mfaCode" inputmode="numeric" maxlength="6"
+                style="text-align:center;font-size:24px;letter-spacing:10px" placeholder="000000"></div>
+            <div id="mfaErr"></div>
+          </div>
+          <div class="modal-foot"><button class="btn ghost" id="mNo">ยกเลิก</button>
+            <button class="btn gold" id="mOk">ยืนยันและเปิดใช้งาน</button></div>`, true);
+        const box = document.getElementById('modalBox');
+        box.querySelector('#mClose').onclick = box.querySelector('#mNo').onclick = closeModal;
+        box.querySelector('#mOk').onclick = async () => {
+          const code = box.querySelector('#mfaCode').value.trim();
+          try {
+            await mfaConfirm(f.id, code);
+            closeModal(); toast('เปิดยืนยันสองชั้นแล้ว', 'ok'); location.reload();
+          } catch (e) {
+            box.querySelector('#mfaErr').innerHTML = '<div class="notice red">' + esc(e.message) + '</div>';
+          }
+        };
+      } catch (e) { toast(esc(e.message), 'err'); }
+    };
+    const mfaOff = el.querySelector('#secMfaOff');
+    if (mfaOff) mfaOff.onclick = async () => {
+      try {
+        const fs = await mfaFactors();
+        for (const f of fs) await mfaRemove(f.id);
+        toast('ปิดยืนยันสองชั้นแล้ว'); location.reload();
+      } catch (e) { toast(esc(e.message), 'err'); }
+    };
 
     el.querySelector('#setWipe').onclick = () => {
       openModal(`

@@ -31,6 +31,12 @@ db.version(2).stores({
   recon:      'id, bank_line_id, sale_id',
 });
 
+/* เวอร์ชัน 3 : ประวัติการเข้าใช้งานเก็บในเครื่องด้วย
+   ตอนออฟไลน์ก็ยังบันทึกได้ แล้วค่อยส่งขึ้นเซิร์ฟเวอร์ทีหลัง */
+db.version(3).stores({
+  events: '++id, kind, at',
+});
+
 /* ---------------------------------------------------------------- meta ---- */
 export async function metaGet(key, dflt = null) {
   const r = await db.meta.get(key);

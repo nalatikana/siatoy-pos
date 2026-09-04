@@ -19,6 +19,25 @@ export const currentProfile = () => profile;
 export const canSeeCost = () => !!profile && (profile.role === 'supervisor' || profile.role === 'owner');
 export const isOwner = () => !!profile && profile.role === 'owner';
 
+/* บันทึกเหตุการณ์การเข้าใช้งาน  ลงเครื่องเสมอ และส่งขึ้นเซิร์ฟเวอร์ถ้าต่ออยู่
+ * ห้ามให้การบันทึกล้มเหลวไปขวางการทำงานของผู้ใช้เด็ดขาด จึงกลืน error ทั้งหมด */
+export async function logEvent(kind, detail) {
+  const at = new Date().toISOString();
+  let device_id = null, device_name = null;
+  try {
+    const { deviceId, currentLocation } = await import('./store.js');
+    device_id = await deviceId();
+    device_name = (await currentLocation() || {}).name || null;
+  } catch (e) {}
+  try { await db.events.add({ kind, at, device_id, device_name, detail: detail || null }); } catch (e) {}
+  if (sb && user) {
+    try {
+      await sb.from('login_events').insert({
+        user_id: user.id, kind, device_id, device_name, at, detail: detail || null });
+    } catch (e) {}
+  }
+}
+
 /* เรียกฟังก์ชันฝั่งเซิร์ฟเวอร์ (Edge Function) พร้อมโทเคนล็อกอินของผู้ใช้ปัจจุบัน */
 export async function invoke(name, body) {
   if (!sb) throw new Error('ยังไม่ได้ต่อฐานข้อมูลกลาง');
@@ -42,6 +61,56 @@ export async function serverSetting(key, value) {
   const { error } = await sb.from('settings').upsert({ key, value, updated_by: user.id }, { onConflict: 'key' });
   if (error) throw new Error(error.message);
   return value;
+}
+
+/* ------------------------------------------- ยืนยันสองชั้น (TOTP/MFA) ---- */
+/* ใช้กับบัญชีเจ้าของร้านเป็นหลัก เพราะเป็นบัญชีเดียวที่เห็นทุกอย่างและสร้างบัญชีคนอื่นได้
+ * ส่วนพนักงานไม่ควรบังคับ จะกลายเป็นภาระตอนเปิดร้าน */
+export async function mfaFactors() {
+  if (!sb || !user) return [];
+  const { data, error } = await sb.auth.mfa.listFactors();
+  if (error) return [];
+  return (data.totp || []).filter(f => f.status === 'verified');
+}
+
+export async function mfaEnroll() {
+  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Siatoy POS' });
+  if (error) throw new Error(error.message);
+  return data;                       // { id, totp: { qr_code, secret, uri } }
+}
+
+export async function mfaConfirm(factorId, code) {
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId, code: String(code).trim() });
+  if (error) throw new Error(/invalid/i.test(error.message) ? 'รหัสไม่ถูกต้อง ลองใหม่อีกครั้ง' : error.message);
+  return true;
+}
+
+export async function mfaRemove(factorId) {
+  const { error } = await sb.auth.mfa.unenroll({ factorId });
+  if (error) throw new Error(error.message);
+}
+
+/* หลังใส่รหัสผ่านถูกแล้ว ถ้าบัญชีเปิดยืนยันสองชั้นไว้ ต้องใส่รหัสจากแอปอีกชั้น */
+export async function mfaPending() {
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || !data) return null;
+    if (data.nextLevel !== 'aal2' || data.currentLevel === 'aal2') return null;
+    const { data: f } = await sb.auth.mfa.listFactors();
+    const factor = (f && f.totp || []).find(x => x.status === 'verified');
+    return factor ? factor.id : null;
+  } catch (e) { return null; }
+}
+
+export async function mfaSubmit(factorId, code) {
+  const { data: ch, error: cErr } = await sb.auth.mfa.challenge({ factorId });
+  if (cErr) throw new Error(cErr.message);
+  const { error } = await sb.auth.mfa.verify({ factorId, challengeId: ch.id, code: String(code).trim() });
+  if (error) throw new Error(/invalid/i.test(error.message) ? 'รหัสไม่ถูกต้อง ลองใหม่อีกครั้ง' : error.message);
+  const { data: sess } = await sb.auth.getSession();
+  if (sess && sess.session) await adoptSession(sess.session);
+  return true;
 }
 
 /* ------------------------------------------------------------ เริ่มต้น ---- */

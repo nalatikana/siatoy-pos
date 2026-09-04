@@ -6,7 +6,8 @@
  */
 import { esc, toast, openModal, closeModal, redrawPage } from '../lib/util.js';
 import { hasBackend } from '../config.js';
-import { invoke, currentUser, currentProfile, client } from '../lib/sync.js';
+import { invoke, currentUser, currentProfile, client, canSeeCost } from '../lib/sync.js';
+import { db } from '../lib/store.js';
 import { S } from '../lib/state.js';
 
 const ROLE_NAME = { staff: 'พนักงานหน้าร้าน', supervisor: 'หัวหน้างาน', owner: 'เจ้าของร้าน' };
@@ -19,14 +20,54 @@ const CAN = {
   owner:      { can: ['เห็นและทำได้ทุกอย่าง', 'เปิดการ์ดโดยไม่รับเงิน', 'สร้างและลบบัญชีผู้ใช้'], cant: [] },
 };
 
-let list = [];
+let list = [], events = [];
+
+const KIND = {
+  login:         ['เข้าสู่ระบบ', 'green'],
+  logout:        ['ออกจากระบบ', ''],
+  lock:          ['ล็อกหน้าจอ', ''],
+  unlock:        ['ปลดล็อกหน้าจอ', 'green'],
+  unlock_failed: ['ใส่ PIN ผิด', 'red'],
+  pin_set:       ['ตั้ง PIN ใหม่', 'warn'],
+};
 
 async function load() {
-  list = [];
+  list = []; events = [];
   const sb = client();
-  if (!sb || !currentUser()) return;
-  const { data } = await sb.from('profiles').select('*').order('created_at');
-  list = data || [];
+  if (sb && currentUser()) {
+    const { data } = await sb.from('profiles').select('*').order('created_at');
+    list = data || [];
+    const { data: ev } = await sb.from('login_events_view')
+      .select('*').order('at', { ascending: false }).limit(60);
+    events = ev || [];
+  } else {
+    // โหมดทดลอง ยังไม่มีบัญชีจริง แต่ประวัติในเครื่องมีให้ดู
+    events = (await db.events.orderBy('id').reverse().limit(60).toArray())
+      .map(e => ({ ...e, display_name: 'เครื่องนี้' }));
+  }
+}
+
+function historyCard() {
+  return `
+  <div class="card" style="margin-top:14px">
+    <div class="card-title"><span class="ic">🕘</span> ประวัติการเข้าใช้งาน
+      <span class="sub">${events.length} รายการล่าสุด</span></div>
+    ${events.length ? `<div class="tbl-wrap"><table>
+      <thead><tr><th>เวลา</th><th>ใคร</th><th>เหตุการณ์</th><th>เครื่อง / จุดขาย</th></tr></thead>
+      <tbody>${events.map(e => {
+        const k = KIND[e.kind] || [e.kind, ''];
+        return `<tr>
+          <td class="mini">${new Date(e.at).toLocaleString('th-TH', { day: '2-digit', month: 'short',
+            hour: '2-digit', minute: '2-digit' })}</td>
+          <td>${esc(e.display_name || '-')}</td>
+          <td><span class="tag ${k[1]}">${k[0]}</span></td>
+          <td class="mini">${esc(e.device_name || '-')}${e.device_id ? ' · ' + esc(e.device_id) : ''}</td>
+        </tr>`; }).join('')}</tbody></table></div>`
+      : '<div class="cart-empty"><span class="big">🕘</span>ยังไม่มีประวัติ</div>'}
+    <div class="notice info" style="margin-top:12px">ประวัตินี้แก้หรือลบย้อนหลังไม่ได้
+      แม้แต่เจ้าของร้าน · เก็บย้อนหลัง 180 วัน · ถ้าเห็นการเข้าใช้งานจากเครื่องที่ไม่รู้จัก
+      ให้เปลี่ยนรหัสผ่านของบัญชีนั้นทันที</div>
+  </div>`;
 }
 
 function userForm(existing) {
@@ -163,7 +204,8 @@ export const usersPage = {
           <div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:5px">
             ${CAN[r].can.map(c => `<span class="tag green">✓ ${c}</span>`).join('')}
             ${CAN[r].cant.map(c => `<span class="tag red">✕ ${c}</span>`).join('')}</div></div>`).join('')}
-      </div>`;
+      </div>
+      ${historyCard()}`;
 
     return `
     <div class="page-head">
@@ -187,7 +229,8 @@ export const usersPage = {
         ` : ''}</td>
       </tr>`).join('')}</tbody></table></div></div>
     <div class="notice warn" style="margin-top:14px">⚠️ การลบบัญชีไม่ได้ลบบิลหรือประวัติที่คนนั้นเคยทำไว้
-      ทุกอย่างยังตรวจย้อนหลังได้ครบ · ถ้าแค่ให้หยุดใช้ชั่วคราว ใช้วิธีปิดใช้งานบัญชีแทน</div>`;
+      ทุกอย่างยังตรวจย้อนหลังได้ครบ · ถ้าแค่ให้หยุดใช้ชั่วคราว ใช้วิธีปิดใช้งานบัญชีแทน</div>
+    ${historyCard()}`;
   },
 
   mount(el) {
