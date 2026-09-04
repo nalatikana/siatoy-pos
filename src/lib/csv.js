@@ -1,8 +1,19 @@
 /* อ่านไฟล์ CSV แบบง่าย ๆ รองรับค่าที่ครอบด้วยเครื่องหมายคำพูดและมีลูกน้ำข้างใน */
-export function parseCSV(text) {
+export function parseCSV(text, delim) {
+  text = String(text).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+
+  /* ต้องรู้ก่อนว่าไฟล์นี้คั่นด้วยอะไร แล้วใช้ตัวนั้นตัวเดียว
+     ถ้าตัดทั้งลูกน้ำและแท็บพร้อมกัน ข้อมูลที่ก๊อบจาก Excel มา (คั่นด้วยแท็บ)
+     ซึ่งมีตัวเลขใส่ลูกน้ำอย่าง 2,490 จะถูกตัดเป็นสองช่อง แล้วข้อมูลเลื่อนทั้งแถว */
+  if (!delim) {
+    const first = text.split('\n')[0] || '';
+    const tabs = (first.match(/\t/g) || []).length;
+    const commas = (first.match(/,/g) || []).length;
+    delim = tabs > commas ? '\t' : ',';
+  }
+
   const rows = [];
   let row = [], cell = '', q = false;
-  text = text.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (q) {
@@ -10,7 +21,7 @@ export function parseCSV(text) {
       else if (c === '"') q = false;
       else cell += c;
     } else if (c === '"') q = true;
-    else if (c === ',' || c === '\t') { row.push(cell); cell = ''; }
+    else if (c === delim) { row.push(cell); cell = ''; }
     else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
     else cell += c;
   }

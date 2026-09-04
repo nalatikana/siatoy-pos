@@ -17,12 +17,13 @@ import { reportPage } from './pages/report.js';
 import { reconPage } from './pages/recon.js';
 import { notifyPage } from './pages/notify.js';
 import { loginPage } from './pages/login.js';
+import { importPage } from './pages/import.js';
 import { initClient, currentProfile, currentUser, signOut, pull, push,
          startAutoSync, switchToLiveData } from './lib/sync.js';
 
 const ROUTES = {
   pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
-  scan: scanPage, stock: stockPage, sets: setsPage, vendors: vendorsPage,
+  scan: scanPage, stock: stockPage, sets: setsPage, vendors: vendorsPage, import: importPage,
   event: eventPage, recon: reconPage, members: membersPage,
   report: reportPage, notify: notifyPage,
 };
