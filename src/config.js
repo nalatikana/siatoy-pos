@@ -12,4 +12,13 @@ export const CONFIG = {
   printerDpi: 203,          // ความละเอียดเครื่องพิมพ์สติกเกอร์ ES-9960 (203 หรือ 300)
 };
 
-export const hasBackend = () => Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
+/* โหมดเดโม : เปิดด้วย ?demo=1 ท้าย URL
+ * ใช้ส่งให้ลูกค้าหรือคนนอกลองเล่นโดยไม่แตะฐานข้อมูลจริง
+ *   - ไม่ต่อเซิร์ฟเวอร์ ไม่ต้องล็อกอิน สลับสิทธิ์ดูได้ทั้งสามระดับ
+ *   - ข้อมูลอยู่คนละที่เก็บกับของจริง ลบทิ้งได้โดยไม่กระทบร้าน
+ */
+export const DEMO = (() => {
+  try { return new URLSearchParams(location.search).has('demo'); } catch (e) { return false; }
+})();
+
+export const hasBackend = () => !DEMO && Boolean(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);

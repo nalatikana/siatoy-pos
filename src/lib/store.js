@@ -7,9 +7,11 @@
  */
 import { uuid, yymmdd } from './util.js';
 import { SEED_LOCATIONS, SEED_VENDORS, SEED_SETS, SEED_PRODUCTS, SEED_MEMBERS } from './seed.js';
+import { DEMO } from '../config.js';
 
 const Dexie = globalThis.Dexie;
-export const db = new Dexie('siatoy-pos');
+// โหมดเดโมใช้ที่เก็บคนละก้อน ของจริงกับของทดลองจึงไม่ปนกันแม้เปิดบนเครื่องเดียวกัน
+export const db = new Dexie(DEMO ? 'siatoy-pos-demo' : 'siatoy-pos');
 
 db.version(1).stores({
   products:    'id, sku, category, set_id, vendor_id',

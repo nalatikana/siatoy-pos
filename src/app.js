@@ -1,5 +1,5 @@
 /* จุดเริ่มของแอป : ธีม สิทธิ์ นาฬิกา เมนู ตัวจัดเส้นทาง และแถบสถานะการซิงก์ */
-import { CONFIG, hasBackend } from './config.js';
+import { CONFIG, hasBackend, DEMO } from './config.js';
 import { $, $$, toast } from './lib/util.js';
 import { S } from './lib/state.js';
 import { ensureSeeded, currentLocation, pendingCount, loadSettings } from './lib/store.js';
@@ -89,7 +89,7 @@ async function drawSync() {
     chip.innerHTML = '📴 <b>ออฟไลน์' + (n ? ' · ค้าง ' + n : '') + '</b>';
     chip.style.color = 'var(--warn)';
   } else if (!hasBackend()) {
-    chip.innerHTML = '🧪 <b>โหมดทดลอง' + (n ? ' · ค้าง ' + n : '') + '</b>';
+    chip.innerHTML = (DEMO ? '🧪 <b>เดโม · ข้อมูลตัวอย่าง' : '🧪 <b>โหมดทดลอง') + (n ? ' · ค้าง ' + n : '') + '</b>';
     chip.style.color = 'var(--muted)';
   } else if (n) {
     chip.innerHTML = '⏳ <b>รอส่ง ' + n + '</b>';
@@ -175,7 +175,9 @@ async function boot() {
   await maybeShowFirstTime();
 
   if (!hasBackend()) {
-    toast('โหมดทดลอง · ข้อมูลเก็บในเครื่องนี้เท่านั้น<br><span class="mini">ยังไม่ได้ต่อฐานข้อมูลกลาง</span>');
+    toast(DEMO
+      ? 'เดโมสำหรับทดลองใช้ · ข้อมูลเป็นของตัวอย่าง<br><span class="mini">ยิงบาร์โค้ดเล่นได้เต็มที่ ไม่กระทบข้อมูลจริงของร้าน</span>'
+      : 'โหมดทดลอง · ข้อมูลเก็บในเครื่องนี้เท่านั้น<br><span class="mini">ยังไม่ได้ต่อฐานข้อมูลกลาง</span>');
   }
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
