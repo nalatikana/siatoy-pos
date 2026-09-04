@@ -18,6 +18,8 @@ import { reconPage } from './pages/recon.js';
 import { notifyPage } from './pages/notify.js';
 import { loginPage } from './pages/login.js';
 import { importPage } from './pages/import.js';
+import { usersPage } from './pages/users.js';
+import { openHelp, maybeShowFirstTime } from './pages/help.js';
 import { initClient, currentProfile, currentUser, signOut, pull, push,
          startAutoSync, switchToLiveData } from './lib/sync.js';
 
@@ -25,7 +27,7 @@ const ROUTES = {
   pos: posPage, bills: billsPage, labels: labelsPage, settings: settingsPage,
   scan: scanPage, stock: stockPage, sets: setsPage, vendors: vendorsPage, import: importPage,
   event: eventPage, recon: reconPage, members: membersPage,
-  report: reportPage, notify: notifyPage,
+  report: reportPage, notify: notifyPage, users: usersPage,
 };
 
 /* ---------------------------------------------------------------- ธีม ---- */
@@ -111,6 +113,7 @@ async function boot() {
     toast(S.theme === 'dark' ? '🌙 โหมดกลางคืน · ธีมดำ-ทอง' : '☀️ โหมดกลางวัน · ธีมขาว-เขียว');
   };
   $('#hambBtn').onclick = () => $('#sidebar').classList.toggle('open');
+  $('#helpBtn').onclick = () => openHelp();
   $('#roleSwitch').onclick = e => {
     const b = e.target.closest('[data-role]'); if (b) setRole(b.dataset.role);
   };
@@ -161,6 +164,7 @@ async function boot() {
 
   await render();
   await drawSync();
+  await maybeShowFirstTime();
 
   if (!hasBackend()) {
     toast('โหมดทดลอง · ข้อมูลเก็บในเครื่องนี้เท่านั้น<br><span class="mini">ยังไม่ได้ต่อฐานข้อมูลกลาง</span>');

@@ -19,6 +19,31 @@ export const currentProfile = () => profile;
 export const canSeeCost = () => !!profile && (profile.role === 'supervisor' || profile.role === 'owner');
 export const isOwner = () => !!profile && profile.role === 'owner';
 
+/* เรียกฟังก์ชันฝั่งเซิร์ฟเวอร์ (Edge Function) พร้อมโทเคนล็อกอินของผู้ใช้ปัจจุบัน */
+export async function invoke(name, body) {
+  if (!sb) throw new Error('ยังไม่ได้ต่อฐานข้อมูลกลาง');
+  const { data, error } = await sb.functions.invoke(name, { body });
+  if (error) {
+    let msg = error.message;
+    try { const j = await error.context?.json?.(); if (j?.error) msg = j.error; } catch (e) {}
+    throw new Error(msg);
+  }
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
+/* อ่าน/เขียนค่าตั้งค่าบนเซิร์ฟเวอร์ (ใช้กับโทเคนแจ้งเตือน ที่ต้องไม่อยู่ในเครื่องพนักงาน) */
+export async function serverSetting(key, value) {
+  if (!sb || !user) return null;
+  if (value === undefined) {
+    const { data } = await sb.from('settings').select('value').eq('key', key).maybeSingle();
+    return data ? data.value : null;
+  }
+  const { error } = await sb.from('settings').upsert({ key, value, updated_by: user.id }, { onConflict: 'key' });
+  if (error) throw new Error(error.message);
+  return value;
+}
+
 /* ------------------------------------------------------------ เริ่มต้น ---- */
 export async function initClient() {
   if (!hasBackend()) return null;

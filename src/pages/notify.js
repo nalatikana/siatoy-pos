@@ -1,14 +1,21 @@
 /* แจ้งเตือนอัตโนมัติ
  *
- * ข้อจำกัดที่ต้องรู้ : หน้าเว็บส่งข้อความตอนตี 1 เองไม่ได้ เพราะตอนนั้นไม่มีใครเปิดแอปค้างไว้
- * การส่งอัตโนมัติต้องให้เซิร์ฟเวอร์เป็นคนทำ (งานตั้งเวลาฝั่ง Supabase)
- * หน้านี้จึงทำได้สองอย่างคือ ตั้งค่าช่องทาง และกดส่งสรุปเดี๋ยวนี้ด้วยตัวเอง
+ * LINE เรียกจากหน้าเว็บตรง ๆ ไม่ได้ (เบราว์เซอร์บล็อก) และการส่งตอนตี 1
+ * ก็ทำจากหน้าเว็บไม่ได้เพราะตอนนั้นไม่มีใครเปิดแอปค้างไว้
+ * ทั้งสองอย่างจึงส่งผ่านฟังก์ชันฝั่งเซิร์ฟเวอร์ ส่วนหน้านี้ทำหน้าที่ตั้งค่าและดูตัวอย่าง
+ * Telegram เรียกตรงจากเบราว์เซอร์ได้ จึงทดสอบได้ทันทีแม้ยังไม่ได้ต่อเซิร์ฟเวอร์
  */
-import { CONFIG } from '../config.js';
-import { money, esc, toast } from '../lib/util.js';
+import { CONFIG, hasBackend } from '../config.js';
+import { esc, toast, redrawPage } from '../lib/util.js';
 import { db, metaGet, metaSet, currentLocation } from '../lib/store.js';
+import { buildFlexSummary, buildTextSummary } from '../../supabase/functions/_shared/flex.js';
+import { renderFlex } from '../lib/flexview.js';
+import { invoke, serverSetting, currentUser, canSeeCost } from '../lib/sync.js';
+import { S } from '../lib/state.js';
 
-let cfg = { channel: 'telegram', token: '', chat: '', time: '01:00', alerts: {} };
+let cfg = { channel: 'line', time: '01:00', alerts: {}, line_to: '', tg_chat: '' };
+let secrets = { line_token: '', tg_token: '' };
+
 const ALERTS = [
   ['low',   'สินค้าใกล้หมด (เหลือไม่ถึง 3 ชิ้น)'],
   ['void',  'มีการยกเลิกบิล'],
@@ -17,102 +24,150 @@ const ALERTS = [
   ['event', 'สรุปยอดงานอีเวนต์เมื่อปิดบูธ'],
 ];
 
-async function summary() {
+/* สร้างสรุปยอดจากข้อมูลในเครื่อง ให้มีหน้าตาเหมือนที่ฟังก์ชัน daily_summary
+   ของฐานข้อมูลส่งกลับมา ตัวอย่างที่เห็นจึงตรงกับของที่จะส่งจริง */
+async function localSummary() {
   const from = new Date(); from.setHours(0, 0, 0, 0);
-  const loc = await currentLocation();
-  const sales = (await db.sales.toArray()).filter(s => s.client_created_at >= from.toISOString());
+  const iso = from.toISOString();
+  const sales = (await db.sales.toArray()).filter(s => s.client_created_at >= iso);
   const ok = sales.filter(s => s.status === 'normal');
+  const okIds = new Set(ok.map(s => s.id));
   const products = await db.products.toArray();
 
-  const okIds = new Set(ok.map(s => s.id));
   const top = new Map();
-  let qty = 0;
   await db.sale_items.each(it => {
     if (!okIds.has(it.sale_id)) return;
-    const t = top.get(it.product_id) || { qty: 0, name: it.product_name };
-    t.qty += it.qty; top.set(it.product_id, t);
+    const t = top.get(it.product_id) || { name: it.product_name, qty: 0, amount: 0 };
+    t.qty += it.qty; t.amount += it.line_total;
+    top.set(it.product_id, t);
   });
-  const moves = new Map();
-  await db.stock_moves.each(m => moves.set(m.product_id, (moves.get(m.product_id) || 0) + m.qty));
-  products.forEach(p => { qty += moves.get(p.id) || 0; });
-
+  const bal = new Map();
+  await db.stock_moves.each(m => bal.set(m.product_id, (bal.get(m.product_id) || 0) + m.qty));
   const pay = k => ok.filter(s => s.payment === k).reduce((a, s) => a + s.total, 0);
-  const best = [...top.values()].sort((a, b) => b.qty - a.qty).slice(0, 3);
-  const low = products.filter(p => (moves.get(p.id) || 0) <= 3 && (moves.get(p.id) || 0) >= 0);
 
-  return `🃏 สรุปยอดขาย ${CONFIG.shopName}
-📅 ${from.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} · ${loc.name}
-
-💰 ยอดขายรวม  ${money(ok.reduce((a, s) => a + s.total, 0))} ฿
-🧾 จำนวนบิล  ${ok.length} บิล
-🏷️ ส่วนลดรวม  ${money(ok.reduce((a, s) => a + s.item_discount + s.bill_discount, 0))} ฿
-
-💵 เงินสด  ${money(pay('cash'))} ฿
-📱 เงินโอน  ${money(pay('transfer'))} ฿
-💳 บัตรเครดิต  ${money(pay('credit'))} ฿
-
-🔥 ขายดีวันนี้
-${best.length ? best.map((t, i) => `${i + 1}. ${t.name} ×${t.qty}`).join('\n') : '— ยังไม่มีการขาย —'}
-
-📦 สต๊อกคงเหลือ ${money(qty)} ชิ้น
-⚠️ ใกล้หมด ${low.length} รายการ
-🚫 บิลยกเลิก ${sales.filter(s => s.status === 'void').length} ใบ
-👑 เปิดการ์ด ${sales.filter(s => s.status === 'open_card').length} รายการ`;
+  const d = new Date(); d.setMinutes(d.getMinutes() + 420 - new Date().getTimezoneOffset() * -1);
+  return {
+    date: new Date().toISOString().slice(0, 10),
+    sales_total: ok.reduce((a, s) => a + s.total, 0),
+    bill_count: ok.length,
+    discount_total: ok.reduce((a, s) => a + s.item_discount + s.bill_discount, 0),
+    card_fee: ok.reduce((a, s) => a + s.card_fee, 0),
+    cash: pay('cash'), transfer: pay('transfer'), credit: pay('credit'),
+    void_count: sales.filter(s => s.status === 'void').length,
+    open_card_count: sales.filter(s => s.status === 'open_card').length,
+    stock_qty: [...bal.values()].reduce((a, q) => a + q, 0),
+    low_count: products.filter(p => (bal.get(p.id) || 0) <= 3 && p.is_active !== false).length,
+    top: [...top.values()].sort((a, b) => b.qty - a.qty).slice(0, 3),
+  };
 }
 
-async function sendTelegram(text) {
-  if (!cfg.token || !cfg.chat) { toast('ยังไม่ได้ใส่ Bot token และ Chat ID', 'err'); return; }
+async function load() {
+  cfg = { ...cfg, ...(await metaGet('notify', {})) };
+  if (hasBackend() && currentUser()) {
+    // โทเคนอยู่บนเซิร์ฟเวอร์ อ่านได้เฉพาะเจ้าของร้าน
+    try {
+      secrets.line_token = (await serverSetting('secret:line_token')) || '';
+      secrets.tg_token   = (await serverSetting('secret:tg_token')) || '';
+      cfg.line_to = (await serverSetting('secret:line_to')) || cfg.line_to;
+      cfg.tg_chat = (await serverSetting('secret:tg_chat')) || cfg.tg_chat;
+    } catch (e) { /* ไม่มีสิทธิ์อ่าน ปล่อยว่างไว้ */ }
+  } else {
+    secrets = { ...secrets, ...(await metaGet('notifySecrets', {})) };
+  }
+}
+
+async function save() {
+  await metaSet('notify', cfg);
+  if (hasBackend() && currentUser()) {
+    await serverSetting('secret:line_token', secrets.line_token);
+    await serverSetting('secret:line_to', cfg.line_to);
+    await serverSetting('secret:tg_token', secrets.tg_token);
+    await serverSetting('secret:tg_chat', cfg.tg_chat);
+  } else {
+    await metaSet('notifySecrets', secrets);
+  }
+}
+
+async function sendNow(el) {
+  const btn = el.querySelector('#nfSend');
+  btn.disabled = true; btn.textContent = 'กำลังส่ง…';
   try {
-    const r = await fetch(`https://api.telegram.org/bot${encodeURIComponent(cfg.token)}/sendMessage`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: cfg.chat, text }),
-    });
-    const j = await r.json();
-    if (j.ok) toast('ส่งเข้า Telegram แล้ว', 'ok');
-    else toast('Telegram ตอบกลับว่า: ' + esc(j.description || 'ส่งไม่สำเร็จ'), 'err');
+    await save();
+    if (hasBackend() && currentUser()) {
+      const r = await invoke('notify', { channel: cfg.channel });
+      const bits = [];
+      if (r.line)     bits.push('LINE: ' + (r.line.ok ? 'ส่งแล้ว' : (r.line.skipped || r.line.error)));
+      if (r.telegram) bits.push('Telegram: ' + (r.telegram.ok ? 'ส่งแล้ว' : (r.telegram.skipped || r.telegram.error)));
+      toast(bits.join('<br>') || 'ส่งแล้ว', r.line?.ok || r.telegram?.ok ? 'ok' : 'err');
+    } else if (cfg.channel === 'telegram' || cfg.channel === 'both') {
+      const sum = await localSummary();
+      const text = buildTextSummary(sum, { shopName: CONFIG.shopName });
+      if (!secrets.tg_token || !cfg.tg_chat) throw new Error('ยังไม่ได้ใส่ Bot token และ Chat ID');
+      const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(secrets.tg_token)}/sendMessage`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: cfg.tg_chat, text }) });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.description || 'ส่งไม่สำเร็จ');
+      toast('ส่งเข้า Telegram แล้ว', 'ok');
+    } else {
+      throw new Error('LINE ต้องต่อฐานข้อมูลกลางก่อน เบราว์เซอร์เรียก LINE ตรง ๆ ไม่ได้');
+    }
   } catch (e) {
-    toast('ส่งไม่สำเร็จ · ' + esc(e.message), 'err');
+    toast(esc(e.message), 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '📤 ส่งสรุปของวันนี้เดี๋ยวนี้';
   }
 }
 
 export const notifyPage = {
   async render() {
-    cfg = await metaGet('notify', cfg);
-    cfg.alerts = cfg.alerts || {};
-    const msg = await summary();
+    await load();
+    const loc = await currentLocation();
+    const sum = await localSummary();
+    const flex = buildFlexSummary(sum, { shopName: CONFIG.shopName, locationName: loc.name });
+    const online = hasBackend() && currentUser();
+    const isLine = cfg.channel === 'line' || cfg.channel === 'both';
+    const isTg   = cfg.channel === 'telegram' || cfg.channel === 'both';
+
     return `
     <div class="page-head"><div><h1>แจ้งเตือนอัตโนมัติ</h1>
-      <p>ส่งสรุปยอดเข้าแชตทุกวัน · ตอนนี้กดส่งเองได้ ส่วนการส่งอัตโนมัติต้องรอต่อเซิร์ฟเวอร์</p></div></div>
+      <p>สรุปยอดประจำวันส่งเข้า LINE เป็นการ์ดแบบ Flex หรือส่งเข้า Telegram เป็นข้อความ</p></div></div>
 
     <div class="grid g2" style="align-items:start">
       <div>
         <div class="card">
-          <div class="card-title"><span class="ic">🔔</span> ตั้งค่าช่องทาง</div>
-          <div class="field"><label>ช่องทาง</label>
-            <div class="seg" id="nfCh">
-              <button class="${cfg.channel === 'telegram' ? 'on' : ''}" data-ch="telegram">Telegram</button>
-              <button class="${cfg.channel === 'line' ? 'on' : ''}" data-ch="line">LINE Official Account</button>
-            </div></div>
-          ${cfg.channel === 'telegram' ? `
-            <div class="field"><label>Bot token (ได้จาก @BotFather)</label>
-              <input class="inp" id="nfToken" type="password" value="${esc(cfg.token)}"
-                placeholder="123456789:AA..."></div>
-            <div class="field"><label>Chat ID (ได้จาก @userinfobot หรือกลุ่มที่เชิญบอทเข้าไป)</label>
-              <input class="inp" id="nfChat" value="${esc(cfg.chat)}" placeholder="-1001234567890"></div>
-            <div class="notice info">Telegram ส่งได้ฟรีไม่จำกัด และเรียกจากหน้าเว็บได้ตรง ๆ
-              จึงทดสอบได้ทันทีโดยยังไม่ต้องมีเซิร์ฟเวอร์</div>`
-          : `
-            <div class="notice warn"><b>LINE Notify ปิดบริการไปแล้วตั้งแต่ 31 มี.ค. 2025</b>
-              การส่งเข้า LINE ตอนนี้ต้องใช้ Messaging API ผ่าน LINE Official Account ของร้าน
-              ซึ่งเรียกจากหน้าเว็บตรง ๆ ไม่ได้ ต้องให้เซิร์ฟเวอร์เป็นคนส่ง
-              จึงจะทำได้หลังต่อฐานข้อมูลกลางแล้ว</div>
-            <div class="field" style="margin-top:14px"><label>Channel access token (เก็บไว้ก่อนได้)</label>
-              <input class="inp" id="nfToken" type="password" value="${esc(cfg.token)}"></div>
-            <div class="field"><label>User ID / Group ID ที่จะส่งเข้า</label>
-              <input class="inp" id="nfChat" value="${esc(cfg.chat)}"></div>`}
+          <div class="card-title"><span class="ic">🔔</span> ช่องทางการส่ง</div>
+          <div class="seg" id="nfCh" style="margin-bottom:14px">
+            <button class="${cfg.channel === 'line' ? 'on' : ''}" data-ch="line">LINE</button>
+            <button class="${cfg.channel === 'telegram' ? 'on' : ''}" data-ch="telegram">Telegram</button>
+            <button class="${cfg.channel === 'both' ? 'on' : ''}" data-ch="both">ทั้งสองทาง</button>
+          </div>
+
+          ${isLine ? `
+          <div class="field"><label>LINE Channel access token (จาก LINE Developers Console)</label>
+            <input class="inp" id="nfLineToken" type="password" value="${esc(secrets.line_token)}"
+              placeholder="วางโทเคนยาว ๆ ที่ได้จากแท็บ Messaging API"></div>
+          <div class="field"><label>ปลายทางที่จะส่งเข้า (User ID หรือ Group ID)</label>
+            <input class="inp" id="nfLineTo" value="${esc(cfg.line_to)}" placeholder="U1234... หรือ C1234..."></div>
+          <div class="notice ${online ? 'info' : 'warn'}">
+            ${online
+              ? 'โทเคนถูกเก็บไว้ที่เซิร์ฟเวอร์ ไม่ถูกส่งมาที่เครื่องพนักงาน และเปิดอ่านได้เฉพาะสิทธิ์เจ้าของร้าน'
+              : 'ยังไม่ได้ต่อฐานข้อมูลกลาง ตอนนี้จึงเก็บไว้ในเครื่องนี้ชั่วคราว และยังส่ง LINE จริงไม่ได้ เพราะเบราว์เซอร์เรียก LINE ตรง ๆ ไม่ได้'}
+          </div>` : ''}
+
+          ${isTg ? `
+          <div class="field" style="margin-top:14px"><label>Telegram Bot token (จาก @BotFather)</label>
+            <input class="inp" id="nfTgToken" type="password" value="${esc(secrets.tg_token)}"
+              placeholder="123456789:AA..."></div>
+          <div class="field"><label>Chat ID (จาก @userinfobot หรือกลุ่มที่เชิญบอทเข้าไป)</label>
+            <input class="inp" id="nfTgChat" value="${esc(cfg.tg_chat)}" placeholder="-1001234567890"></div>` : ''}
+
           <div class="field"><label>เวลาส่งสรุปประจำวัน</label>
             <input class="inp" id="nfTime" type="time" value="${esc(cfg.time)}"></div>
           <button class="btn gold block" id="nfSend">📤 ส่งสรุปของวันนี้เดี๋ยวนี้</button>
+          <div class="mini" style="text-align:center;margin-top:8px">
+            ${online ? 'ส่งผ่านเซิร์ฟเวอร์ · โทเคนไม่ออกจากเซิร์ฟเวอร์'
+                     : 'ตอนนี้ทดสอบได้เฉพาะ Telegram'}</div>
         </div>
 
         <div class="card" style="margin-top:14px">
@@ -122,48 +177,50 @@ export const notifyPage = {
               <span>${n}</span>
               <span class="right"><input type="checkbox" data-alert="${k}" ${cfg.alerts[k] ? 'checked' : ''}></span>
             </label>`).join('')}
-          <div class="notice warn" style="margin-top:14px">⚠️ ทั้งการส่งสรุปตามเวลา
-            และแจ้งเตือนอัตโนมัติเหล่านี้ ต้องให้เซิร์ฟเวอร์เป็นคนส่ง เพราะตอนตี 1 ไม่มีใครเปิดแอปค้างไว้
-            ตอนนี้จึงเป็นการเก็บค่าไว้ก่อน แล้วเปิดใช้ตอนต่อฐานข้อมูลกลางเสร็จ</div>
+          <div class="notice warn" style="margin-top:14px">⚠️ การส่งตามเวลาและแจ้งเตือนอัตโนมัติเหล่านี้
+            ทำงานด้วยงานตั้งเวลาฝั่งเซิร์ฟเวอร์ ต้องติดตั้ง Edge Function ก่อน
+            (ขั้นตอนอยู่ในไฟล์ <b>docs/edge-functions.md</b>)</div>
         </div>
       </div>
 
       <div>
         <div class="card">
-          <div class="card-title"><span class="ic">💬</span> ตัวอย่างข้อความที่จะได้รับ</div>
-          <div class="chat-head"><div class="chat-ava">${cfg.channel === 'line' ? 'L' : 'T'}</div>
-            ${cfg.channel === 'line' ? 'LINE Official Account' : 'Telegram'} · ${esc(cfg.time)} น.</div>
-          <div class="line-preview">${esc(msg)}</div>
+          <div class="card-title"><span class="ic">💬</span> ตัวอย่างการ์ดที่จะได้รับใน LINE</div>
+          <div class="chat-head"><div class="chat-ava">L</div>
+            ${esc(CONFIG.shopName)} · ${esc(cfg.time)} น.</div>
+          <div style="background:#8CABD8;padding:16px;border-radius:12px;margin-top:10px;
+                      display:flex;justify-content:center">
+            ${renderFlex(flex)}
+          </div>
+          <div class="mini" style="margin-top:10px">
+            ตัวอย่างนี้วาดจากโครงสร้างการ์ดตัวจริงที่ระบบจะส่ง และใช้ยอดขายของวันนี้จริง
+            แก้ที่ตัวสร้างการ์ดเมื่อไหร่ ตัวอย่างนี้เปลี่ยนตามทันที
+          </div>
         </div>
       </div>
     </div>`;
   },
 
   mount(el) {
-    const save = async () => {
-      const g = id => { const e = el.querySelector('#' + id); return e ? e.value.trim() : ''; };
-      cfg.token = g('nfToken'); cfg.chat = g('nfChat'); cfg.time = g('nfTime') || '01:00';
-      await metaSet('notify', cfg);
-    };
-    ['nfToken', 'nfChat', 'nfTime'].forEach(id => {
+    const bind = (id, key, store) => {
       const e = el.querySelector('#' + id);
-      if (e) e.onchange = async () => { await save(); toast('บันทึกการตั้งค่าแล้ว', 'ok'); };
-    });
+      if (e) e.onchange = async () => { store[key] = e.value.trim(); await save(); toast('บันทึกแล้ว', 'ok'); };
+    };
+    bind('nfLineToken', 'line_token', secrets);
+    bind('nfTgToken',   'tg_token',   secrets);
+    bind('nfLineTo',    'line_to',    cfg);
+    bind('nfTgChat',    'tg_chat',    cfg);
+    bind('nfTime',      'time',       cfg);
+
     el.querySelector('#nfCh').onclick = async e => {
       const b = e.target.closest('[data-ch]'); if (!b) return;
-      await save(); cfg.channel = b.dataset.ch; await metaSet('notify', cfg);
-      const { redrawPage } = await import('../lib/util.js');
+      cfg.channel = b.dataset.ch; await metaSet('notify', cfg);
       await redrawPage(el, notifyPage);
     };
     el.addEventListener('change', async e => {
       const a = e.target.closest('[data-alert]');
       if (a) { cfg.alerts[a.dataset.alert] = a.checked; await metaSet('notify', cfg); }
     });
-    el.querySelector('#nfSend').onclick = async () => {
-      await save();
-      const text = await summary();
-      if (cfg.channel === 'telegram') await sendTelegram(text);
-      else toast('LINE ต้องส่งผ่านเซิร์ฟเวอร์ ยังส่งจากหน้าเว็บไม่ได้', 'err');
-    };
+    el.querySelector('#nfSend').onclick = () => sendNow(el);
   },
 };
